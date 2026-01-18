@@ -8,3 +8,4 @@ pydantic-settings==2.1.0
 python-dotenv==1.0.0
 ollama==0.1.6
 python-multipart==0.0.6
+python-jose==3.3.0
