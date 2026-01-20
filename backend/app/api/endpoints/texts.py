@@ -40,3 +40,31 @@ async def get_text(text_id: str):
         raise HTTPException(status_code=404, detail="Document not found")
     text['_id'] = str(text['_id'])
     return text
+
+@router.put("/{text_id}")
+async def update_text(text_id: str, document: TextDocument):
+    """Update a text document"""
+    from bson import ObjectId
+    db = get_mongo_db()
+    update_data = {
+        "title": document.title,
+        "content": document.content,
+        "updated_at": datetime.utcnow()
+    }
+    result = db.texts.update_one(
+        {"_id": ObjectId(text_id)},
+        {"$set": update_data}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return {"message": "Document updated"}
+
+@router.delete("/{text_id}")
+async def delete_text(text_id: str):
+    """Delete a text document"""
+    from bson import ObjectId
+    db = get_mongo_db()
+    result = db.texts.delete_one({"_id": ObjectId(text_id)})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return {"message": "Document deleted"}

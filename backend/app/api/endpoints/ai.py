@@ -18,6 +18,17 @@ class PromptRequest(BaseModel):
 class ChatRequest(BaseModel):
     messages: list
 
+class SummarizeRequest(BaseModel):
+    text: str
+    context: Optional[str] = None
+
+class ExplainRequest(BaseModel):
+    text: str
+    context: Optional[str] = None
+
+class TextRequest(BaseModel):
+    text: str
+
 @router.post("/generate")
 async def generate(request: PromptRequest):
     """Generate AI response"""
@@ -98,46 +109,46 @@ async def process_with_llm(request: LLMRequest):
         raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
 
 @router.post("/summarize")
-async def summarize(text: str = Form(...), context: Optional[str] = Form(None)):
+async def summarize(request: SummarizeRequest):
     """Summarize text"""
     try:
-        result = await ollama_service.summarize_text(text, context)
+        result = await ollama_service.summarize_text(request.text, request.context)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/explain-doubt")
-async def explain_doubt(text: str = Form(...), context: Optional[str] = Form(None)):
+async def explain_doubt(request: ExplainRequest):
     """Explain a doubt or question"""
     try:
-        result = await ollama_service.explain_doubt(text, context)
+        result = await ollama_service.explain_doubt(request.text, request.context)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/extract-topics")
-async def extract_topics(text: str = Form(...)):
+async def extract_topics(request: TextRequest):
     """Extract topics from text"""
     try:
-        result = await ollama_service.extract_topics(text)
+        result = await ollama_service.extract_topics(request.text)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/classify-difficulty")
-async def classify_difficulty(text: str = Form(...)):
+async def classify_difficulty(request: TextRequest):
     """Classify difficulty level of content"""
     try:
-        result = await ollama_service.classify_difficulty(text)
+        result = await ollama_service.classify_difficulty(request.text)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/extract-keywords")
-async def extract_keywords(text: str = Form(...)):
+async def extract_keywords(request: TextRequest):
     """Extract keywords from text"""
     try:
-        result = await ollama_service.extract_keywords(text)
+        result = await ollama_service.extract_keywords(request.text)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

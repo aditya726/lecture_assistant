@@ -149,15 +149,15 @@ async def google_auth_url():
     return {"url": google_auth_url}
 
 
-@router.post("/google/callback", response_model=Token)
-async def google_callback(auth_request: GoogleAuthRequest, db: Session = Depends(get_db)):
+@router.get("/google/callback")
+async def google_callback(code: str, db: Session = Depends(get_db)):
     """Handle Google OAuth callback and create/login user"""
     # Exchange authorization code for access token
     async with httpx.AsyncClient() as client:
         token_response = await client.post(
             "https://oauth2.googleapis.com/token",
             data={
-                "code": auth_request.code,
+                "code": code,
                 "client_id": settings.GOOGLE_CLIENT_ID,
                 "client_secret": settings.GOOGLE_CLIENT_SECRET,
                 "redirect_uri": settings.GOOGLE_REDIRECT_URI,
@@ -218,11 +218,10 @@ async def google_callback(auth_request: GoogleAuthRequest, db: Session = Depends
     access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
     refresh_token = create_refresh_token(data={"sub": str(user.id), "email": user.email})
     
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer"
-    }
+    # Redirect to frontend with tokens
+    from fastapi.responses import RedirectResponse
+    frontend_url = f"http://localhost:5173/auth/callback?access_token={access_token}&refresh_token={refresh_token}"
+    return RedirectResponse(url=frontend_url)
 
 
 @router.post("/refresh", response_model=Token)
