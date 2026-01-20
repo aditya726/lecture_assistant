@@ -1,24 +1,41 @@
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { LogOut, User } from 'lucide-react';
 
 export default function Layout({ children }) {
+  const { user, logout, isAuthenticated } = useAuth();
+
+  if (!isAuthenticated) {
+    return children;
+  }
+
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="border-b">
-        <div className="container mx-auto px-4 py-4">
+    <div className="min-h-screen bg-gray-50">
+      <nav className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">FastAPI + React App</h1>
-            <div className="flex gap-4">
-              <Link to="/" className="hover:underline">Home</Link>
-              <Link to="/students" className="hover:underline">Students</Link>
-              <Link to="/ai-chat" className="hover:underline">AI Chat</Link>
-              <Link to="/texts" className="hover:underline">Texts</Link>
+            <Link to="/" className="text-xl font-bold text-gray-900 hover:text-blue-600">
+              AI Learning Platform
+            </Link>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 text-sm text-gray-700">
+                <User className="w-4 h-4" />
+                <span>{user?.email}</span>
+              </div>
+              <button
+                onClick={logout}
+                className="px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </button>
             </div>
           </div>
         </div>
       </nav>
-      <main className="container mx-auto px-4 py-8">
+      <main className="py-6">
         {children}
       </main>
     </div>
-  )
+  );
 }
