@@ -110,12 +110,12 @@ export default function AudioRecorder({ onTranscriptionComplete, onError }) {
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 text-white">
       {!isRecording ? (
         <button
           onClick={startRecording}
           disabled={isProcessing}
-          className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-white/10"
           title="Start recording"
         >
           <Mic className="w-4 h-4" />
@@ -124,7 +124,7 @@ export default function AudioRecorder({ onTranscriptionComplete, onError }) {
       ) : (
         <button
           onClick={stopRecording}
-          className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors animate-pulse"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 text-white hover:bg-white/20 transition-colors animate-pulse border border-white/10 backdrop-blur"
           title="Stop recording"
         >
           <Square className="w-4 h-4" />
@@ -133,7 +133,7 @@ export default function AudioRecorder({ onTranscriptionComplete, onError }) {
       )}
 
       {isProcessing && (
-        <div className="flex items-center gap-2 text-blue-600">
+        <div className="flex items-center gap-2 text-white/80">
           <Loader2 className="w-4 h-4 animate-spin" />
           <span className="text-sm">Transcribing...</span>
         </div>

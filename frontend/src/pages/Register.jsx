@@ -4,7 +4,8 @@ import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../components/ui/toast'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card'
+import GlassCard from '../components/ui/GlassCard'
+import { motion } from 'framer-motion'
 import { UserPlus, Mail, Lock, User, Chrome } from 'lucide-react'
 
 export default function Register() {
@@ -50,111 +51,113 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-white to-blue-50 p-4">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="space-y-1">
-          <div className="flex items-center justify-center mb-4">
-            <div className="bg-gradient-to-r from-purple-500 to-blue-600 p-3 rounded-full">
-              <UserPlus className="w-6 h-6 text-white" />
-            </div>
-          </div>
-          <CardTitle className="text-2xl text-center font-bold">Create Account</CardTitle>
-          <CardDescription className="text-center">
-            Enter your details to get started
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="fullName">
-                Full Name
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="fullName"
-                  type="text"
-                  placeholder="John Doe"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="pl-10"
-                  required
-                />
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-24 -left-24 h-80 w-80 rounded-full bg-indigo-500/20 blur-3xl" />
+        <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-emerald-400/20 blur-3xl" />
+      </div>
+      <main className="relative flex items-center justify-center px-6 py-16">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-md">
+          <GlassCard className="p-8">
+            <div className="flex items-center justify-center mb-4">
+              <div className="rounded-full border border-white/10 bg-white/10 p-3">
+                <UserPlus className="w-6 h-6 text-white" />
               </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="email">
-                Email
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
-                  required
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="password">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
-                  required
-                  minLength={8}
-                />
-              </div>
-              <p className="text-xs text-gray-500">Must be at least 8 characters</p>
-            </div>
-            <Button
-              type="submit"
-              className="w-full bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700"
-              disabled={loading}
-            >
-              {loading ? "Creating account..." : "Create Account"}
-            </Button>
-          </form>
-          
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-gray-500">Or continue with</span>
-            </div>
-          </div>
+            <h1 className="text-2xl text-center font-bold text-white">Create Account</h1>
+            <p className="text-center text-white/70 mt-1">Enter your details to get started</p>
 
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={handleGoogleLogin}
-          >
-            <Chrome className="mr-2 h-4 w-4" />
-            Sign up with Google
-          </Button>
-        </CardContent>
-        <CardFooter className="flex flex-col space-y-2">
-          <div className="text-sm text-center text-gray-600">
-            Already have an account?{' '}
-            <Link to="/login" className="text-purple-600 hover:underline font-medium">
-              Sign in
-            </Link>
-          </div>
-        </CardFooter>
-      </Card>
+            <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white/80" htmlFor="fullName">
+                  Full Name
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+                  <Input
+                    id="fullName"
+                    type="text"
+                    placeholder="John Doe"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="pl-10 rounded-lg border border-white/15 bg-white/10 text-white placeholder-white/60 focus:ring-2 focus:ring-indigo-400/40"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white/80" htmlFor="email">
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10 rounded-lg border border-white/15 bg-white/10 text-white placeholder-white/60 focus:ring-2 focus:ring-indigo-400/40"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white/80" htmlFor="password">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10 rounded-lg border border-white/15 bg-white/10 text-white placeholder-white/60 focus:ring-2 focus:ring-indigo-400/40"
+                    required
+                    minLength={8}
+                  />
+                </div>
+                <p className="text-xs text-white/60">Must be at least 8 characters</p>
+              </div>
+              <Button
+                type="submit"
+                className="w-full rounded-xl bg-white/90 text-gray-900 hover:bg-white"
+                disabled={loading}
+              >
+                {loading ? "Creating account..." : "Create Account"}
+              </Button>
+            </form>
+
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-white/10" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-transparent px-2 text-white/60">Or continue with</span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full rounded-xl border border-white/15 bg-white/10 text-white hover:bg-white/15"
+              onClick={handleGoogleLogin}
+            >
+              <Chrome className="mr-2 h-4 w-4" />
+              Sign up with Google
+            </Button>
+
+            <div className="mt-6 text-sm text-center text-white/70">
+              Already have an account?{' '}
+              <Link to="/login" className="text-white hover:underline font-medium">
+                Sign in
+              </Link>
+            </div>
+          </GlassCard>
+        </motion.div>
+      </main>
     </div>
   )
 }

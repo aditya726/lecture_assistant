@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../services/api'
+import GlassCard from '../components/ui/GlassCard'
+import { motion } from 'framer-motion'
 
 export default function Students() {
   const [students, setStudents] = useState([])
@@ -20,20 +22,20 @@ export default function Students() {
     }
   }
 
-  if (loading) return <div>Loading...</div>
+  if (loading) return <div className="text-white/80">Loading...</div>
 
   return (
     <div className="space-y-4">
-      <h2 className="text-3xl font-bold">Students</h2>
+      <h2 className="text-3xl font-bold text-white">Students</h2>
       <div className="grid gap-4">
         {students.length === 0 ? (
-          <p className="text-muted-foreground">No students found</p>
+          <p className="text-white/70">No students found</p>
         ) : (
           students.map((student) => (
-            <div key={student.id} className="border rounded-lg p-4">
-              <h3 className="font-semibold">{student.name}</h3>
-              <p className="text-sm text-muted-foreground">{student.email}</p>
-            </div>
+            <GlassCard key={student.id} className="p-4">
+              <h3 className="font-semibold text-white">{student.name}</h3>
+              <p className="text-sm text-white/70">{student.email}</p>
+            </GlassCard>
           ))
         )}
       </div>
