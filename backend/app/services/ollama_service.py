@@ -140,5 +140,75 @@ Respond in JSON format:
                 "error": "Failed to parse response",
                 "raw_response": response
             }
+    
+    async def analyze_image(self, image_base64: str, prompt: str = None) -> dict:
+        """
+        Analyze image using vision model (requires LLaVA or similar vision model)
+        
+        Args:
+            image_base64: Base64 encoded image
+            prompt: Optional prompt for specific analysis
+        
+        Returns:
+            dict with analysis results
+        """
+        try:
+            default_prompt = "Describe this image in detail. What are the main elements, and what might this be used for in an educational context?"
+            analysis_prompt = prompt or default_prompt
+            
+            # Try to use vision model if available (llava, bakllava, etc.)
+            try:
+                response = self.client.generate(
+                    model="llava",  # Vision model
+                    prompt=analysis_prompt,
+                    images=[image_base64]
+                )
+                return {
+                    "description": response['response'],
+                    "model": "llava"
+                }
+            except Exception as vision_error:
+                # Fallback: Use text description
+                return {
+                    "description": "Image analysis requires a vision model like LLaVA. Please install it with: ollama pull llava",
+                    "error": str(vision_error),
+                    "model": "none"
+                }
+        except Exception as e:
+            raise Exception(f"Image analysis error: {str(e)}")
+    
+    async def summarize_document(self, document_text: str, document_type: str = "document") -> dict:
+        """
+        Specialized summarization for documents
+        
+        Args:
+            document_text: Extracted text from document
+            document_type: Type of document (pdf, docx, etc.)
+        
+        Returns:
+            dict with comprehensive summary
+        """
+        prompt = f"""Analyze the following {document_type} content and provide:
+1. Executive Summary (2-3 sentences)
+2. Main Topics (3-5 topics with brief descriptions)
+3. Key Takeaways (3-5 important points)
+4. Suggested Study Notes (organized bullet points)
+
+Document Content:
+{document_text[:4000]}  # Limit to avoid token limits
+
+Respond in JSON format:
+{{
+    "executive_summary": "...",
+    "main_topics": [
+        {{"topic": "Topic 1", "description": "Brief description"}},
+        {{"topic": "Topic 2", "description": "Brief description"}}
+    ],
+    "key_takeaways": ["takeaway1", "takeaway2"],
+    "study_notes": ["note1", "note2", "note3"]
+}}"""
+        
+        response = await self.generate_response(prompt)
+        return self._parse_json_response(response)
 
 ollama_service = OllamaService()
