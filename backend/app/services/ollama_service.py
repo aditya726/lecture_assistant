@@ -35,6 +35,7 @@ class OllamaService:
         prompt = f"""Analyze the following text and provide:
 1. A concise summary (2-3 sentences)
 2. Key points (3-5 bullet points)
+3. If any equation or problem given then solve it stepwise.
 
 Text: {text}
 {f'Context: {context}' if context else ''}
@@ -59,6 +60,7 @@ Provide:
 1. A clear explanation
 2. 2-3 practical examples
 3. Related concepts to explore
+4. If any equation or problem given then solve it stepwise.
 
 Respond in JSON format:
 {{
@@ -193,6 +195,7 @@ Respond in JSON format:
 2. Main Topics (3-5 topics with brief descriptions)
 3. Key Takeaways (3-5 important points)
 4. Suggested Study Notes (organized bullet points)
+5. If any equation or problem given then solve it stepwise.
 
 Document Content:
 {document_text[:4000]}  # Limit to avoid token limits

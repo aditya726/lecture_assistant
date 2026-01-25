@@ -6,6 +6,7 @@ import PyPDF2
 from docx import Document
 import base64
 import io
+from app.services.ocr_service import ocr_service
 
 class FileProcessingService:
     
@@ -16,7 +17,7 @@ class FileProcessingService:
     
     async def process_image(self, image_path: str) -> dict:
         """
-        Process image file - extract text using OCR if available, or prepare for vision model
+        Process image file - extract text using OCR if available, and prepare for vision model
         
         Args:
             image_path: Path to image file
@@ -37,12 +38,34 @@ class FileProcessingService:
                 buffered = io.BytesIO()
                 img.save(buffered, format=img.format if img.format else "PNG")
                 img_base64 = base64.b64encode(buffered.getvalue()).decode()
+
+                # Try OCR extraction if available
+                ocr_result = ocr_service.extract_text_from_image(image_path)
+                ocr_summary = None
+                if ocr_result.get("success") and ocr_result.get("text"):
+                    # Prepare short preview of OCR text
+                    txt = ocr_result.get("text", "")
+                    ocr_summary = txt[:500] + "..." if len(txt) > 500 else txt
+                    try:
+                        preview = (ocr_summary or "")[:200].replace("\n", " ")
+                        print(f"[Upload] OCR succeeded for {image_path}. Preview: '{preview}'{'...' if ocr_summary and len(ocr_summary) > 200 else ''}")
+                    except Exception:
+                        pass
+                else:
+                    try:
+                        err = ocr_result.get("error") if isinstance(ocr_result, dict) else None
+                        stage = ocr_result.get("stage") if isinstance(ocr_result, dict) else None
+                        print(f"[Upload] OCR returned no text for {image_path}. Stage={stage} Error={err}. Using image description fallback.")
+                    except Exception:
+                        pass
                 
                 return {
                     "type": "image",
                     "info": info,
                     "base64": img_base64,
-                    "description": f"Image: {img.size[0]}x{img.size[1]} pixels"
+                    "description": f"Image: {img.size[0]}x{img.size[1]} pixels",
+                    "ocr": ocr_result,
+                    "ocr_preview": ocr_summary
                 }
         except Exception as e:
             raise Exception(f"Image processing error: {str(e)}")
