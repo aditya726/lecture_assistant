@@ -2,6 +2,8 @@ from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
 from typing import Optional
 from app.services.ollama_service import ollama_service
+from app.services.transcription_service import transcription_service
+from app.services.file_processing_service import file_processing_service
 from app.schemas.llm import (
     LLMRequest, LLMResponse, TaskType, InputType,
     SummarizationResponse, DoubtExplanationResponse,
@@ -9,6 +11,9 @@ from app.schemas.llm import (
     KeywordExtractionResponse
 )
 import base64
+import tempfile
+import os
+import aiofiles
 
 router = APIRouter()
 
@@ -152,3 +157,196 @@ async def extract_keywords(request: TextRequest):
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/transcribe-audio")
+async def transcribe_audio(
+    audio_file: UploadFile = File(...),
+    language: Optional[str] = Form(None)
+):
+    """
+    Transcribe audio file to text using Whisper
+    Supports: mp3, wav, m4a, ogg, etc.
+    """
+    try:
+        # Create temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(audio_file.filename)[1]) as temp_file:
+            content = await audio_file.read()
+            temp_file.write(content)
+            temp_path = temp_file.name
+        
+        try:
+            # Transcribe
+            result = await transcription_service.transcribe_audio_file(temp_path, language)
+            return {
+                "success": True,
+                "transcription": result["text"],
+                "language": result["language"],
+                "segments": result["segments"]
+            }
+        finally:
+            # Clean up
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Transcription error: {str(e)}")
+
+@router.post("/transcribe-audio-base64")
+async def transcribe_audio_base64(request: dict):
+    """
+    Transcribe base64 encoded audio to text
+    Request body: {"audio_base64": "...", "language": "en" (optional)}
+    """
+    try:
+        audio_base64 = request.get("audio_base64")
+        language = request.get("language")
+        
+        if not audio_base64:
+            raise HTTPException(status_code=400, detail="audio_base64 is required")
+        
+        result = await transcription_service.transcribe_audio_base64(audio_base64, language)
+        return {
+            "success": True,
+            "transcription": result["text"],
+            "language": result["language"],
+            "segments": result["segments"]
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Transcription error: {str(e)}")
+
+@router.post("/upload-file")
+async def upload_file(
+    file: UploadFile = File(...),
+    task: str = Form("summarization")  # summarization, topic_extraction, etc.
+):
+    """
+    Upload and process files (images, PDFs, DOCX, videos)
+    Then use AI to analyze the content
+    """
+    try:
+        # Get file extension
+        file_extension = os.path.splitext(file.filename)[1].lower()
+        
+        # Create temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as temp_file:
+            content = await file.read()
+            temp_file.write(content)
+            temp_path = temp_file.name
+        
+        try:
+            # Process file based on type
+            processed_data = await file_processing_service.process_file(temp_path, file_extension)
+            
+            # Extract text content for AI processing
+            text_content = ""
+            if processed_data["type"] in ["pdf", "docx", "text"]:
+                text_content = processed_data["text"]
+            elif processed_data["type"] == "image":
+                # For images, we'll use vision model capabilities through Ollama
+                # For now, provide a description
+                text_content = f"Image file uploaded: {processed_data['description']}"
+            elif processed_data["type"] == "video":
+                text_content = "Video file uploaded. Please extract audio for transcription."
+            
+            # Process with AI based on task
+            ai_result = None
+            if text_content and task:
+                if task == "summarization":
+                    ai_result = await ollama_service.summarize_text(text_content)
+                elif task == "topic_extraction":
+                    ai_result = await ollama_service.extract_topics(text_content)
+                elif task == "keyword_extraction":
+                    ai_result = await ollama_service.extract_keywords(text_content)
+                elif task == "difficulty_classification":
+                    ai_result = await ollama_service.classify_difficulty(text_content)
+            
+            return {
+                "success": True,
+                "filename": file.filename,
+                "file_type": processed_data["type"],
+                "processed_data": processed_data,
+                "ai_analysis": ai_result
+            }
+        
+        finally:
+            # Clean up
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"File processing error: {str(e)}")
+
+@router.post("/analyze-with-context")
+async def analyze_with_context(
+    text: Optional[str] = Form(None),
+    audio_file: Optional[UploadFile] = File(None),
+    document_file: Optional[UploadFile] = File(None),
+    task: str = Form("summarization"),
+    context: Optional[str] = Form(None)
+):
+    """
+    Multi-modal analysis endpoint
+    - Can accept text, audio, or document
+    - Transcribes audio if provided
+    - Extracts text from documents
+    - Performs AI analysis based on task
+    """
+    try:
+        content_text = text or ""
+        
+        # Process audio if provided
+        if audio_file:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(audio_file.filename)[1]) as temp_file:
+                audio_content = await audio_file.read()
+                temp_file.write(audio_content)
+                temp_path = temp_file.name
+            
+            try:
+                transcription_result = await transcription_service.transcribe_audio_file(temp_path)
+                content_text += "\n\n" + transcription_result["text"]
+            finally:
+                if os.path.exists(temp_path):
+                    os.remove(temp_path)
+        
+        # Process document if provided
+        if document_file:
+            file_extension = os.path.splitext(document_file.filename)[1].lower()
+            with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as temp_file:
+                doc_content = await document_file.read()
+                temp_file.write(doc_content)
+                temp_path = temp_file.name
+            
+            try:
+                processed_data = await file_processing_service.process_file(temp_path, file_extension)
+                if processed_data.get("text"):
+                    content_text += "\n\n" + processed_data["text"]
+            finally:
+                if os.path.exists(temp_path):
+                    os.remove(temp_path)
+        
+        if not content_text.strip():
+            raise HTTPException(status_code=400, detail="No content provided")
+        
+        # Perform AI analysis
+        ai_result = None
+        if task == "summarization":
+            ai_result = await ollama_service.summarize_text(content_text, context)
+        elif task == "topic_extraction":
+            ai_result = await ollama_service.extract_topics(content_text)
+        elif task == "keyword_extraction":
+            ai_result = await ollama_service.extract_keywords(content_text)
+        elif task == "difficulty_classification":
+            ai_result = await ollama_service.classify_difficulty(content_text)
+        elif task == "doubt_explanation":
+            ai_result = await ollama_service.explain_doubt(content_text, context)
+        
+        return {
+            "success": True,
+            "content": content_text[:500] + "..." if len(content_text) > 500 else content_text,
+            "full_content_length": len(content_text),
+            "analysis": ai_result
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Analysis error: {str(e)}")

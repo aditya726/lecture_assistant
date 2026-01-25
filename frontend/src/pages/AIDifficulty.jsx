@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import api from '../services/api';
 import { BarChart, Loader2 } from 'lucide-react';
+import GlassCard from '../components/ui/GlassCard';
+import { motion } from 'framer-motion';
+import MarkdownRenderer from '../components/MarkdownRenderer';
 
 export default function AIDifficulty() {
   const [text, setText] = useState('');
@@ -36,117 +39,118 @@ export default function AIDifficulty() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="mb-6">
+    <div className="max-w-6xl mx-auto px-6 py-12">
+      <div className="mb-8">
         <div className="flex items-center gap-2 mb-2">
-          <BarChart className="w-6 h-6 text-red-600" />
-          <h1 className="text-2xl font-bold text-gray-900">Classify Difficulty</h1>
+          <BarChart className="w-6 h-6 text-red-300" />
+          <h1 className="text-2xl font-bold text-white">Classify Difficulty</h1>
         </div>
-        <p className="text-gray-600">Assess the difficulty level of your content</p>
+        <p className="text-white/70">Assess the difficulty level of your content</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Input Form */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Input</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Text Content *
-              </label>
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder="Enter the text to analyze..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 h-64"
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading || !text.trim()}
-              className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Analyzing...
-                </>
-              ) : (
-                'Classify Difficulty'
-              )}
-            </button>
-          </form>
-        </div>
-
-        {/* Results */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Assessment</h2>
-          
-          {!result ? (
-            <div className="flex flex-col items-center justify-center h-64 text-gray-400">
-              <BarChart className="w-12 h-12 mb-3" />
-              <p>Difficulty assessment will appear here</p>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              <div className="text-center">
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">Difficulty Level</h3>
-                <div className={`inline-block px-6 py-3 rounded-lg border-2 text-xl font-bold ${getDifficultyColor(result.difficulty_level)}`}>
-                  {result.difficulty_level?.toUpperCase()}
-                </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+          <GlassCard className="p-8">
+            <h2 className="text-xl font-semibold text-white mb-5">Input</h2>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-2">
+                  Text Content *
+                </label>
+                <textarea
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  placeholder="Enter the text to analyze..."
+                  className="w-full px-4 py-3 rounded-xl border border-white/15 bg-white/10 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-red-400/40 h-72"
+                  required
+                />
               </div>
 
-              {result.confidence_score && (
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Confidence</h3>
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 h-4 bg-gray-200 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-red-600 rounded-full transition-all" 
-                        style={{ width: `${result.confidence_score * 100}%` }}
-                      />
-                    </div>
-                    <span className="text-sm font-semibold text-gray-900">
-                      {(result.confidence_score * 100).toFixed(1)}%
-                    </span>
+              <button
+                type="submit"
+                disabled={loading || !text.trim()}
+                className="w-full px-4 py-2 rounded-xl bg-white/90 text-gray-900 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Analyzing...
+                  </>
+                ) : (
+                  'Classify Difficulty'
+                )}
+              </button>
+            </form>
+          </GlassCard>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+          <GlassCard className="p-8">
+            <h2 className="text-xl font-semibold text-white mb-5">Assessment</h2>
+            {!result ? (
+              <div className="flex flex-col items-center justify-center h-64 text-white/50">
+                <BarChart className="w-12 h-12 mb-3" />
+                <p>Difficulty assessment will appear here</p>
+              </div>
+            ) : (
+              <div className="space-y-8">
+                <div className="text-center">
+                  <h3 className="text-sm font-semibold text-white/80 mb-3">Difficulty Level</h3>
+                  <div className={`inline-block px-6 py-3 rounded-lg border-2 text-xl font-bold ${getDifficultyColor(result.difficulty_level)}`}>
+                    {result.difficulty_level?.toUpperCase()}
                   </div>
                 </div>
-              )}
 
-              {result.reasoning && (
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Reasoning</h3>
-                  <p className="text-sm text-gray-900 leading-relaxed bg-gray-50 p-4 rounded-lg">
-                    {result.reasoning}
-                  </p>
-                </div>
-              )}
+                {result.confidence_score && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-white/80 mb-2">Confidence</h3>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-4 bg-white/10 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-red-500 rounded-full transition-all" 
+                          style={{ width: `${result.confidence_score * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-sm font-semibold text-white">
+                        {(result.confidence_score * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
+                )}
 
-              {result.factors && result.factors.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Contributing Factors</h3>
-                  <ul className="space-y-1">
-                    {result.factors.map((factor, index) => (
-                      <li key={index} className="text-sm text-gray-900 flex items-start gap-2">
-                        <span className="text-red-600 mt-1">•</span>
-                        <span>{factor}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+                {result.reasoning && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-white/80 mb-2">Reasoning</h3>
+                    <div className="prose prose-invert max-w-none text-sm">
+                      <MarkdownRenderer content={result.reasoning} />
+                    </div>
+                  </div>
+                )}
 
-              {result.recommended_audience && (
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Recommended For</h3>
-                  <p className="text-sm text-gray-900">{result.recommended_audience}</p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+                {result.factors && result.factors.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-white/80 mb-2">Contributing Factors</h3>
+                    <ul className="space-y-2">
+                      {result.factors.map((factor, index) => (
+                        <li key={index} className="text-sm text-white flex items-start gap-2">
+                          <span className="text-red-300 mt-1">•</span>
+                          <span>{factor}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {result.recommended_audience && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-white/80 mb-2">Recommended For</h3>
+                    <p className="text-sm text-white/90">{result.recommended_audience}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </GlassCard>
+        </motion.div>
       </div>
     </div>
   );

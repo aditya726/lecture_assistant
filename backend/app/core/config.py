@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     OLLAMA_HOST: str = "http://localhost:11434"
     OLLAMA_MODEL: str = "llama3:8b"
     
+    # CORS
+    FRONTEND_ORIGIN: str = "http://localhost:5173"
+    
     # JWT Settings
     SECRET_KEY: str = "your-secret-key-change-this-in-production-use-openssl-rand-hex-32"
     ALGORITHM: str = "HS256"
