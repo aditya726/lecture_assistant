@@ -4,6 +4,7 @@ from typing import Optional
 from app.services.ollama_service import ollama_service
 from app.services.transcription_service import transcription_service
 from app.services.file_processing_service import file_processing_service
+from app.services.ocr_service import ocr_service
 from app.schemas.llm import (
     LLMRequest, LLMResponse, TaskType, InputType,
     SummarizationResponse, DoubtExplanationResponse,
@@ -240,14 +241,31 @@ async def upload_file(
             
             # Extract text content for AI processing
             text_content = ""
+            analysis_source = ""
             if processed_data["type"] in ["pdf", "docx", "text"]:
                 text_content = processed_data["text"]
+                analysis_source = processed_data["type"]
             elif processed_data["type"] == "image":
-                # For images, we'll use vision model capabilities through Ollama
-                # For now, provide a description
-                text_content = f"Image file uploaded: {processed_data['description']}"
+                # For images, prefer OCR text if available, else fallback to description
+                ocr_text = (processed_data.get("ocr") or {}).get("text") or ""
+                if ocr_text.strip():
+                    text_content = ocr_text
+                    analysis_source = "ocr"
+                    try:
+                        preview = (processed_data.get("ocr_preview") or "")[:200].replace("\n", " ")
+                        print(f"[Upload] Using OCR text for '{file.filename}'. Preview: '{preview}'{'...' if processed_data.get('ocr_preview') and len(processed_data.get('ocr_preview')) > 200 else ''}")
+                    except Exception:
+                        pass
+                else:
+                    text_content = f"Image file uploaded: {processed_data['description']}"
+                    analysis_source = "image_description"
+                    try:
+                        print(f"[Upload] OCR empty for '{file.filename}'. Fallback to description: {processed_data['description']}")
+                    except Exception:
+                        pass
             elif processed_data["type"] == "video":
                 text_content = "Video file uploaded. Please extract audio for transcription."
+                analysis_source = "video"
             
             # Process with AI based on task
             ai_result = None
@@ -266,7 +284,8 @@ async def upload_file(
                 "filename": file.filename,
                 "file_type": processed_data["type"],
                 "processed_data": processed_data,
-                "ai_analysis": ai_result
+                "ai_analysis": ai_result,
+                "analysis_source": analysis_source
             }
         
         finally:
@@ -276,6 +295,67 @@ async def upload_file(
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"File processing error: {str(e)}")
+
+@router.post("/ocr-analyze-image")
+async def ocr_analyze_image(
+    file: UploadFile = File(...),
+    task: str = Form("summarization"),
+    context: Optional[str] = Form(None)
+):
+    """
+    Extract text from an image using PaddleOCR and run AI analysis on the extracted text.
+    Returns OCR diagnostics and the LLM output for the selected task.
+    """
+    try:
+        file_extension = os.path.splitext(file.filename)[1].lower()
+        if file_extension not in [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"]:
+            raise HTTPException(status_code=400, detail="Unsupported image format for OCR")
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as temp_file:
+            content = await file.read()
+            temp_file.write(content)
+            temp_path = temp_file.name
+
+        try:
+            # Run OCR directly
+            ocr_result = ocr_service.extract_text_from_image(temp_path)
+            ocr_text = (ocr_result or {}).get("text", "").strip()
+            if not ocr_text:
+                # Provide helpful diagnostics
+                return {
+                    "success": False,
+                    "filename": file.filename,
+                    "ocr": ocr_result,
+                    "message": "No text detected by OCR. Try a clearer image or different angle."
+                }
+
+            # Feed OCR text to AI based on task
+            ai_result = None
+            if task == "summarization":
+                ai_result = await ollama_service.summarize_text(ocr_text, context)
+            elif task == "topic_extraction":
+                ai_result = await ollama_service.extract_topics(ocr_text)
+            elif task == "keyword_extraction":
+                ai_result = await ollama_service.extract_keywords(ocr_text)
+            elif task == "difficulty_classification":
+                ai_result = await ollama_service.classify_difficulty(ocr_text)
+            elif task == "doubt_explanation":
+                ai_result = await ollama_service.explain_doubt(ocr_text, context)
+
+            return {
+                "success": True,
+                "filename": file.filename,
+                "ocr": ocr_result,
+                "ai_analysis": ai_result
+            }
+        finally:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"OCR analysis error: {str(e)}")
 
 @router.post("/analyze-with-context")
 async def analyze_with_context(
