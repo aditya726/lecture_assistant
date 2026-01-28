@@ -9,22 +9,52 @@ class OllamaService:
         self.model = settings.OLLAMA_MODEL
     
     async def generate_response(self, prompt: str) -> str:
-        """Generate AI response using Ollama"""
+        """Generate AI response using Ollama with automatic question detection and solving"""
         try:
+            # Enhance prompt to detect and solve questions
+            enhanced_prompt = f"""You are a helpful educational AI assistant. Analyze the following prompt:
+
+{prompt}
+
+Instructions:
+1. If this contains any questions, problems, equations, or exercises - solve them completely with step-by-step explanations
+2. Show all work, formulas, and reasoning
+3. Provide comprehensive, descriptive answers (not brief responses)
+4. Include examples and applications where relevant
+5. If there are multiple questions or problems, address each one thoroughly
+6. For any mathematical or scientific problems, explain the concepts involved
+
+Provide a thorough, educational response:"""
+            
             response = self.client.generate(
                 model=self.model,
-                prompt=prompt
+                prompt=enhanced_prompt
             )
             return response['response']
         except Exception as e:
             raise Exception(f"Ollama error: {str(e)}")
     
     async def chat(self, messages: list) -> str:
-        """Chat with AI using conversation history"""
+        """Chat with AI using conversation history with enhanced question detection"""
         try:
+            # Add system instruction to solve questions
+            enhanced_messages = [{
+                "role": "system",
+                "content": """You are a helpful educational AI assistant. When the user asks a question or presents a problem:
+1. Identify if it's a question or problem that needs solving
+2. If it contains equations, math problems, or questions, provide step-by-step solutions with detailed explanations
+3. Show all work and reasoning clearly
+4. Provide comprehensive, descriptive answers (not brief)
+5. Include examples and real-world applications where relevant
+6. If there are multiple questions, answer each one thoroughly
+
+Be thorough, educational, and solve all problems completely."""
+            }]
+            enhanced_messages.extend(messages)
+            
             response = self.client.chat(
                 model=self.model,
-                messages=messages
+                messages=enhanced_messages
             )
             return response['message']['content']
         except Exception as e:
@@ -32,18 +62,23 @@ class OllamaService:
     
     async def summarize_text(self, text: str, context: str = None) -> dict:
         """Summarize the given text"""
-        prompt = f"""Analyze the following text and provide:
-1. A concise summary (2-3 sentences)
-2. Key points (3-5 bullet points)
-3. If any equation or problem given then solve it stepwise.
+        prompt = f"""Analyze the following text comprehensively and provide a detailed response:
+
+1. A detailed summary (4-6 sentences) covering all main ideas and important details
+2. Key points (5-8 comprehensive bullet points with explanations)
+3. If any equations or problems are present, solve them step-by-step with detailed explanations
+4. Include relevant examples or applications where applicable
+5. Highlight any important terminology or concepts
 
 Text: {text}
 {f'Context: {context}' if context else ''}
 
+Provide a thorough, descriptive analysis. Be specific and informative.
+
 Respond in JSON format:
 {{
     "summary": "...",
-    "key_points": ["point1", "point2", "point3"]
+    "key_points": ["point1", "point2", "point3", "point4", "point5"]
 }}"""
         
         response = await self.generate_response(prompt)
@@ -51,22 +86,26 @@ Respond in JSON format:
     
     async def explain_doubt(self, text: str, context: str = None) -> dict:
         """Explain a doubt or concept"""
-        prompt = f"""Explain the following doubt/question clearly:
+        prompt = f"""Provide a comprehensive and detailed explanation for the following doubt/question:
 
 Question/Doubt: {text}
 {f'Context: {context}' if context else ''}
 
-Provide:
-1. A clear explanation
-2. 2-3 practical examples
-3. Related concepts to explore
-4. If any equation or problem given then solve it stepwise.
+Provide an in-depth response including:
+1. A thorough, detailed explanation covering all aspects (use multiple paragraphs if needed)
+2. 4-5 practical, real-world examples with detailed descriptions
+3. Related concepts to explore with brief explanations
+4. If any equations or problems are present, solve them step-by-step with detailed reasoning for each step
+5. Common misconceptions or pitfalls to avoid
+6. Additional resources or topics for further learning
+
+Be descriptive, educational, and thorough in your response.
 
 Respond in JSON format:
 {{
     "explanation": "...",
-    "examples": ["example1", "example2"],
-    "related_concepts": ["concept1", "concept2"]
+    "examples": ["example1", "example2", "example3", "example4"],
+    "related_concepts": ["concept1", "concept2", "concept3"]
 }}"""
         
         response = await self.generate_response(prompt)
@@ -74,16 +113,21 @@ Respond in JSON format:
     
     async def extract_topics(self, text: str) -> dict:
         """Extract main topics and subtopics from text"""
-        prompt = f"""Analyze the following text and extract:
-1. Main topics (3-5 topics)
-2. Subtopics under each main topic
+        prompt = f"""Analyze the following text comprehensively and extract detailed information:
+
+1. Main topics (5-8 topics with descriptive titles)
+2. Subtopics under each main topic with explanations
+3. Key themes and concepts
+4. Learning objectives that can be derived
 
 Text: {text}
 
+Provide thorough topic analysis with descriptive labels.
+
 Respond in JSON format:
 {{
-    "main_topics": ["topic1", "topic2", "topic3"],
-    "subtopics": ["subtopic1", "subtopic2", "subtopic3"]
+    "main_topics": ["topic1", "topic2", "topic3", "topic4", "topic5"],
+    "subtopics": ["subtopic1", "subtopic2", "subtopic3", "subtopic4"]
 }}"""
         
         response = await self.generate_response(prompt)
@@ -91,18 +135,25 @@ Respond in JSON format:
     
     async def classify_difficulty(self, text: str) -> dict:
         """Classify the difficulty level of content"""
-        prompt = f"""Analyze the following content and classify its difficulty level:
+        prompt = f"""Analyze the following content in detail and classify its difficulty level:
 
 Content: {text}
 
-Classify as: beginner, intermediate, advanced, or expert
-Provide reasoning and list prerequisites needed.
+Provide a comprehensive analysis:
+1. Classify as: beginner, intermediate, advanced, or expert
+2. Provide detailed reasoning for your classification (multiple sentences)
+3. List all prerequisites needed with descriptions
+4. Estimate time to understand the content
+5. Suggest learning path or approach
+6. Identify what makes it challenging or easy
+
+Be thorough and descriptive in your analysis.
 
 Respond in JSON format:
 {{
     "difficulty_level": "intermediate",
     "reasoning": "...",
-    "prerequisites": ["prerequisite1", "prerequisite2"]
+    "prerequisites": ["prerequisite1", "prerequisite2", "prerequisite3"]
 }}"""
         
         response = await self.generate_response(prompt)
@@ -110,18 +161,22 @@ Respond in JSON format:
     
     async def extract_keywords(self, text: str) -> dict:
         """Extract keywords and key phrases from text"""
-        prompt = f"""Extract important keywords and key phrases from the following text:
+        prompt = f"""Extract and analyze important keywords and key phrases from the following text:
 
 Text: {text}
 
-Identify:
-1. Single-word keywords (5-10 words)
-2. Key phrases (3-5 phrases)
+Provide a comprehensive extraction:
+1. Single-word keywords (10-15 important words)
+2. Key phrases (5-8 descriptive phrases)
+3. Technical terms and jargon
+4. Core concepts and their importance
+
+Be thorough and include all significant terms.
 
 Respond in JSON format:
 {{
-    "keywords": ["keyword1", "keyword2", "keyword3"],
-    "phrases": ["phrase1", "phrase2", "phrase3"]
+    "keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
+    "phrases": ["phrase1", "phrase2", "phrase3", "phrase4"]
 }}"""
         
         response = await self.generate_response(prompt)
@@ -155,7 +210,18 @@ Respond in JSON format:
             dict with analysis results
         """
         try:
-            default_prompt = "Describe this image in detail. What are the main elements, and what might this be used for in an educational context?"
+            default_prompt = """Provide a comprehensive and detailed analysis of this image:
+
+1. Describe all visible elements, objects, text, diagrams, and their relationships in detail
+2. Identify the type of content (educational material, document, diagram, photograph, etc.)
+3. Extract and explain any text, formulas, equations, or problems shown in the image
+4. If it contains educational content, explain the concepts being taught
+5. If there are diagrams or charts, describe what they represent and their significance
+6. Suggest how this could be used in an educational context
+7. If there are any equations or problems, solve them step-by-step
+8. Provide relevant background information or context
+
+Be extremely thorough and descriptive in your analysis. Include every detail you can observe."""
             analysis_prompt = prompt or default_prompt
             
             # Try to use vision model if available (llava, bakllava, etc.)
@@ -190,12 +256,18 @@ Respond in JSON format:
         Returns:
             dict with comprehensive summary
         """
-        prompt = f"""Analyze the following {document_type} content and provide:
-1. Executive Summary (2-3 sentences)
-2. Main Topics (3-5 topics with brief descriptions)
-3. Key Takeaways (3-5 important points)
-4. Suggested Study Notes (organized bullet points)
-5. If any equation or problem given then solve it stepwise.
+        prompt = f"""Provide a comprehensive and detailed analysis of the following {document_type} content:
+
+1. Executive Summary (5-8 sentences covering all major aspects)
+2. Main Topics (5-10 topics with detailed descriptions for each)
+3. Key Takeaways (8-12 important points with explanations)
+4. Detailed Study Notes (organized bullet points with comprehensive coverage)
+5. If any equations or problems are present, solve them step-by-step with detailed explanations
+6. Important terminology and definitions
+7. Practical applications or real-world relevance
+8. Connections between different sections or concepts
+
+Be extremely thorough and descriptive. This should serve as a comprehensive study resource.
 
 Document Content:
 {document_text[:4000]}  # Limit to avoid token limits
