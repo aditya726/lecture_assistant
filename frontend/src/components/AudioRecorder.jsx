@@ -124,11 +124,11 @@ export default function AudioRecorder({ onTranscriptionComplete, onError }) {
       ) : (
         <button
           onClick={stopRecording}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 text-white hover:bg-white/20 transition-colors animate-pulse border border-white/10 backdrop-blur"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600 transition-colors animate-pulse border border-red-600 shadow-lg"
           title="Stop recording"
         >
-          <Square className="w-4 h-4" />
-          <span className="text-sm">{formatTime(recordingTime)}</span>
+          <Square className="w-4 h-4 fill-current" />
+          <span className="text-sm font-semibold">{formatTime(recordingTime)}</span>
         </button>
       )}
 
