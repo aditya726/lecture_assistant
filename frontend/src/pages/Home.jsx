@@ -31,8 +31,8 @@ export default function Home() {
   return (
     <div className="relative px-6 py-10 md:px-10 lg:px-16 overflow-hidden">
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-32 -left-32 h-80 w-80 rounded-full bg-cyan-500/20 blur-3xl" />
-        <div className="absolute -bottom-32 -right-20 h-96 w-96 rounded-full bg-indigo-500/20 blur-3xl" />
+        <div className="absolute -top-32 -left-32 h-80 w-80 rounded-full bg-sky-400/20 blur-3xl" />
+        <div className="absolute -bottom-32 -right-20 h-96 w-96 rounded-full bg-teal-400/20 blur-3xl" />
       </div>
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
@@ -43,22 +43,22 @@ export default function Home() {
             transition={{ duration: 0.7, ease: 'easeOut' }}
             className="text-center"
           >
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs text-white/80">
+            <div className="inline-flex items-center gap-2 rounded-full border border-input bg-card px-3 py-1 text-xs text-muted-foreground">
               <Sparkles className="h-3.5 w-3.5 text-amber-300" />
               Smarter study with voice, files, and AI
             </div>
-            <h1 className="mt-6 bg-gradient-to-br from-white to-white/70 bg-clip-text text-4xl font-extrabold tracking-tight text-transparent md:text-6xl">
-              Learn faster with a calm, glassy workspace
+            <h1 className="mt-6 text-4xl font-extrabold tracking-tight md:text-6xl text-foreground">
+              Learn faster with an inviting workspace
             </h1>
-            <p className="mx-auto mt-4 max-w-2xl text-balance text-white/70 md:text-lg">
+            <p className="mx-auto mt-4 max-w-2xl text-balance text-muted-foreground md:text-lg">
               Summarize lectures, extract topics, and chat with your materials using
               a refined, distraction-free interface.
             </p>
             <div className="mt-8 flex items-center justify-center gap-3">
-              <Link to="/ai-chat" className="rounded-xl bg-white/90 px-4 py-2.5 text-sm font-medium text-gray-900 shadow hover:bg-white">
+              <Link to="/ai-chat" className="sketchy-button rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground border border-input hover:bg-primary/90">
                 Get Started
               </Link>
-              <Link to="/texts" className="rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-medium text-white hover:bg-white/15">
+              <Link to="/texts" className="sketchy-button rounded-xl border border-input bg-card px-4 py-2.5 text-sm font-medium text-foreground hover:bg-card/80">
                 Explore Texts
               </Link>
             </div>
@@ -69,25 +69,11 @@ export default function Home() {
               <GlassCard className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold text-white">Speak naturally</h3>
-                    <p className="mt-1 text-sm text-white/70">Real-time transcription with Whisper for quick notes.</p>
+                    <h3 className="text-lg font-semibold text-foreground">Speak naturally</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">Real-time transcription with Whisper for quick notes.</p>
                   </div>
-                  <div className="rounded-xl border border-white/10 bg-white/10 p-3">
-                    <Mic className="h-5 w-5 text-cyan-300" />
-                  </div>
-                </div>
-              </GlassCard>
-            </motion.div>
-
-            <motion.div variants={item}>
-              <GlassCard className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-white">Upload anything</h3>
-                    <p className="mt-1 text-sm text-white/70">PDFs, docs, images, and videos for fast summaries.</p>
-                  </div>
-                  <div className="rounded-xl border border-white/10 bg-white/10 p-3">
-                    <Upload className="h-5 w-5 text-indigo-300" />
+                  <div className="rounded-xl border border-input bg-card p-3">
+                    <Mic className="h-5 w-5 text-primary" />
                   </div>
                 </div>
               </GlassCard>
@@ -97,11 +83,25 @@ export default function Home() {
               <GlassCard className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold text-white">Readable responses</h3>
-                    <p className="mt-1 text-sm text-white/70">Clean Markdown formatting and gentle animations.</p>
+                    <h3 className="text-lg font-semibold text-foreground">Upload anything</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">PDFs, docs, images, and videos for fast summaries.</p>
                   </div>
-                  <div className="rounded-xl border border-white/10 bg-white/10 p-3">
-                    <MessageSquare className="h-5 w-5 text-emerald-300" />
+                  <div className="rounded-xl border border-input bg-card p-3">
+                    <Upload className="h-5 w-5 text-accent" />
+                  </div>
+                </div>
+              </GlassCard>
+            </motion.div>
+
+            <motion.div variants={item}>
+              <GlassCard className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">Readable responses</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">Clean Markdown formatting and gentle animations.</p>
+                  </div>
+                  <div className="rounded-xl border border-input bg-card p-3">
+                    <MessageSquare className="h-5 w-5 text-secondary" />
                   </div>
                 </div>
               </GlassCard>
@@ -118,19 +118,19 @@ export default function Home() {
             <GlassCard className="p-6 md:p-10">
               <div className="grid items-center gap-8 md:grid-cols-2">
                 <div>
-                  <h2 className="text-2xl font-semibold text-white">Everything in one place</h2>
-                  <p className="mt-2 text-white/70">
+                  <h2 className="text-2xl font-semibold text-foreground">Everything in one place</h2>
+                  <p className="mt-2 text-muted-foreground">
                     Voice notes, document uploads, and AI chat work together seamlessly. Simple, fast, and reliable.
                   </p>
-                  <ul className="mt-4 space-y-2 text-sm text-white/75">
+                  <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
                     <li>• Smooth glass UI with focus on readability</li>
                     <li>• Fast interactions with subtle motion</li>
                     <li>• Markdown-rendered answers without stray symbols</li>
                   </ul>
                 </div>
                 <div className="relative">
-                  <div className="absolute -inset-6 -z-10 rounded-3xl bg-gradient-to-br from-cyan-500/15 to-indigo-500/15 blur-2xl" />
-                  <div className="aspect-video w-full rounded-xl border border-white/10 bg-white/5" />
+                  <div className="absolute -inset-6 -z-10 rounded-3xl bg-gradient-to-br from-primary/15 to-accent/15 blur-2xl" />
+                  <div className="aspect-video w-full rounded-xl border border-input bg-card" />
                 </div>
               </div>
             </GlassCard>
@@ -138,21 +138,21 @@ export default function Home() {
         </div>
       </motion.div>
       <motion.div variants={container} initial="hidden" animate="show" className="mx-auto mt-10 max-w-6xl">
-        <div className="mb-4 text-white/70">Quick actions</div>
+        <div className="mb-4 text-muted-foreground">Quick actions</div>
         <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
           {features.map((f, idx) => {
             const Icon = f.icon
             return (
               <motion.div key={f.title} variants={item}>
                 <Link to={f.to} className="block">
-                  <GlassCard className="p-5 hover:bg-white/10 transition-colors">
+                  <GlassCard className="p-5 hover:bg-card/80 transition-colors">
                     <div className="flex items-start gap-3">
-                      <div className={`rounded-xl border border-white/10 bg-white/10 p-3 ${f.iconClass}`}>
+                      <div className={`rounded-xl border border-input bg-card p-3`}>
                         <Icon className="h-5 w-5" />
                       </div>
                       <div>
-                        <div className="font-semibold text-white">{f.title}</div>
-                        <div className="text-sm text-white/70">{f.desc}</div>
+                        <div className="font-semibold text-foreground">{f.title}</div>
+                        <div className="text-sm text-muted-foreground">{f.desc}</div>
                       </div>
                     </div>
                   </GlassCard>
