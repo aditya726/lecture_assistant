@@ -4,50 +4,50 @@
 
 @layer base {
   :root {
-    /* Softer light palette for glass surfaces */
-    --background: 220 14% 96%;
-    --foreground: 222.2 40% 10%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 47.4% 11.2%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 47.4% 11.2%;
-    --primary: 222.2 47.4% 11.2%;
+    /* Inviting pastel palette */
+    --background: 45 100% 96%; /* warm cream */
+    --foreground: 220 22% 18%; /* deep charcoal */
+    --card: 48 100% 97%; /* paper */
+    --card-foreground: 220 22% 18%;
+    --popover: 48 100% 97%;
+    --popover-foreground: 220 22% 18%;
+    --primary: 190 70% 40%; /* teal */
     --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
+    --secondary: 30 90% 55%; /* orange */
+    --secondary-foreground: 210 40% 98%;
+    --muted: 50 30% 90%;
+    --muted-foreground: 220 15% 40%;
+    --accent: 200 85% 55%; /* sky */
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 75% 55%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --radius: 0.5rem;
+    --border: 40 30% 85%;
+    --input: 40 30% 85%;
+    --ring: 190 70% 40%;
+    --radius: 0.75rem;
   }
 
   .dark {
-    /* Deep, soothing dark glass palette */
-    --background: 222.2 78% 5.5%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 78% 6%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 78% 6%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 16% 24%;
-    --input: 217.2 16% 24%;
-    --ring: 212.7 26.8% 83.9%;
+    /* Cozy dark palette */
+    --background: 258 35% 12%;
+    --foreground: 48 100% 97%;
+    --card: 258 35% 15%;
+    --card-foreground: 48 100% 97%;
+    --popover: 258 35% 15%;
+    --popover-foreground: 48 100% 97%;
+    --primary: 190 70% 55%;
+    --primary-foreground: 258 35% 12%;
+    --secondary: 12 85% 62%;
+    --secondary-foreground: 258 35% 12%;
+    --muted: 258 15% 22%;
+    --muted-foreground: 48 30% 85%;
+    --accent: 270 85% 68%;
+    --accent-foreground: 258 35% 12%;
+    --destructive: 0 65% 42%;
+    --destructive-foreground: 48 100% 97%;
+    --border: 258 18% 28%;
+    --input: 258 18% 28%;
+    --ring: 190 70% 55%;
   }
 }
 
@@ -57,5 +57,112 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
+    font-family: "Gloria Hallelujah", "Schoolbell", "Indie Flower", "Shadows Into Light", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  }
+}
+
+/* Doodle theme utilities */
+@layer components {
+  .sketchy-border {
+    border: 2px solid hsl(var(--border));
+    border-radius: 18px 24px 16px 22px;
+    box-shadow:
+      2px 2px 0 hsl(var(--foreground) / 0.06),
+      -2px -2px 0 hsl(var(--foreground) / 0.04);
+  }
+
+  .sketchy-card {
+    background-color: hsl(var(--card));
+    color: hsl(var(--card-foreground));
+    border: 2px solid hsl(var(--border));
+    border-radius: 18px 24px 16px 22px;
+    box-shadow:
+      3px 3px 0 hsl(var(--foreground) / 0.08),
+      -3px -3px 0 hsl(var(--foreground) / 0.05);
+  }
+
+  .sketchy-button {
+    border: 2px solid hsl(var(--border));
+    border-radius: 20px 18px 22px 16px;
+    box-shadow:
+      2px 2px 0 hsl(var(--foreground) / 0.08),
+      -2px -2px 0 hsl(var(--foreground) / 0.05);
+    transition: transform 120ms ease, box-shadow 120ms ease;
+  }
+  .sketchy-button:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      3px 3px 0 hsl(var(--foreground) / 0.1),
+      -3px -3px 0 hsl(var(--foreground) / 0.06);
+  }
+
+  .sketchy-input {
+    border: 2px solid hsl(var(--border));
+    border-radius: 22px 18px 20px 16px;
+    box-shadow:
+      1px 1px 0 hsl(var(--foreground) / 0.06);
+  }
+
+  .sketchy-bubble {
+    border: 2px solid hsl(var(--border));
+    border-radius: 24px 20px 22px 18px;
+    box-shadow:
+      2px 2px 0 hsl(var(--foreground) / 0.07);
+  }
+
+  /* Fridge background for notes */
+  .fridge-bg {
+    background: radial-gradient(ellipse at top left, hsl(var(--card)) 0%, hsl(var(--background)) 70%),
+      repeating-linear-gradient(
+        0deg,
+        hsl(var(--foreground) / 0.02),
+        hsl(var(--foreground) / 0.02) 2px,
+        transparent 3px,
+        transparent 6px
+      );
+    backdrop-filter: blur(2px);
+  }
+
+  /* Sticky notes */
+  .sticky-note {
+    position: relative;
+    padding: 1rem;
+    width: 100%;
+    min-height: 160px;
+    border: 2px solid hsl(var(--border));
+    border-radius: 14px 16px 18px 12px;
+    box-shadow: 4px 4px 0 hsl(var(--foreground) / 0.08);
+    transition: transform 150ms ease, box-shadow 150ms ease;
+  }
+  .sticky-note:hover { transform: translateY(-2px) rotate(0.2deg); box-shadow: 6px 6px 0 hsl(var(--foreground) / 0.12); }
+
+  .note-yellow { background: hsl(55 100% 85% / 0.92); color: hsl(220 22% 18%); }
+  .note-pink   { background: hsl(340 85% 88% / 0.92); color: hsl(220 22% 18%); }
+  .note-blue   { background: hsl(200 85% 85% / 0.92); color: hsl(220 22% 18%); }
+  .note-green  { background: hsl(145 55% 85% / 0.92); color: hsl(220 22% 18%); }
+  .note-purple { background: hsl(275 60% 88% / 0.92); color: hsl(220 22% 18%); }
+
+  .note-tape {
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-2deg);
+    width: 64px;
+    height: 18px;
+    background: linear-gradient(135deg, hsl(48 95% 85%), hsl(48 95% 80%));
+    border: 1px solid hsl(var(--border));
+    box-shadow: 2px 2px 0 hsl(var(--foreground) / 0.08);
+  }
+
+  .note-rotate-1 { transform: rotate(-1.5deg); }
+  .note-rotate-2 { transform: rotate(1.2deg); }
+  .note-rotate-3 { transform: rotate(-2.2deg); }
+  .note-rotate-4 { transform: rotate(0.8deg); }
+  .note-rotate-5 { transform: rotate(-0.6deg); }
+
+  .scribble-bubble {
+    border: 2px dashed hsl(var(--border));
+    border-radius: 22px;
+    box-shadow: 3px 3px 0 hsl(var(--foreground) / 0.08);
   }
 }

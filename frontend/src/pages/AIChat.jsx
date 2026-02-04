@@ -5,6 +5,8 @@ import AudioRecorder from '../components/AudioRecorder';
 import FileUploader from '../components/FileUploader';
 import MarkdownRenderer, { normalizeLLMText } from '../components/MarkdownRenderer';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../components/ui/toast';
 
 export default function AIChat() {
   const [messages, setMessages] = useState([]);
@@ -12,6 +14,8 @@ export default function AIChat() {
   const [loading, setLoading] = useState(false);
   const [showFileUpload, setShowFileUpload] = useState(false);
   const [showAudioRecorder, setShowAudioRecorder] = useState(false);
+  const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
 
   // using shared normalizeLLMText from MarkdownRenderer
 
@@ -82,25 +86,66 @@ export default function AIChat() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-12">
-      <div className="rounded-2xl border border-white/10 bg-white/10 backdrop-blur-xl shadow-2xl">
-        <div className="p-6 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-cyan-400/40 to-indigo-500/40 flex items-center justify-center border border-white/20">
-              <Bot className="w-5 h-5 text-white" />
+    <div className="max-w-7xl mx-auto px-6 py-10">
+      <div className="grid md:grid-cols-12 gap-6">
+        {/* Tutor Tips Sidebar */}
+        <aside className="md:col-span-4 sketchy-card p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-9 w-9 rounded-xl bg-primary/20 flex items-center justify-center border border-input">
+              <Bot className="w-5 h-5 text-primary" />
             </div>
-            <h1 className="text-lg font-semibold text-white/90">AI Chat</h1>
+            <div>
+              <h2 className="text-lg font-semibold" style={{fontFamily:'Gloria Hallelujah'}}>Tutor Desk</h2>
+              <p className="text-xs text-muted-foreground">Try these prompts</p>
+            </div>
           </div>
-        </div>
+          <div className="space-y-3">
+            {[
+              'Explain this concept simply',
+              'Give a step-by-step solution',
+              'Create practice questions',
+              'Summarize this topic',
+              'Suggest a study plan',
+              'Quiz me on this'
+            ].map((s, i) => (
+              <button key={i} onClick={() => setInput(s)} className="sketchy-button w-full text-left px-3 py-2 rounded-xl border bg-card hover:bg-card/80">
+                {s}
+              </button>
+            ))}
+          </div>
+        </aside>
+
+        {/* Chat Area */}
+        <div className="md:col-span-8 sketchy-card rounded-2xl border bg-white/60 backdrop-blur-xl shadow-2xl">
+          <div className="p-6 border-b border-input">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-xl bg-primary/20 flex items-center justify-center border border-input">
+                <Bot className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-lg font-semibold" style={{fontFamily:'Gloria Hallelujah'}}>Tutor Chat</h1>
+                <p className="text-xs text-muted-foreground">Friendly study guide—ask, explore, and learn</p>
+              </div>
+            </div>
+          </div>
         
         <div className="p-8 h-[600px] overflow-y-auto space-y-5">
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-white/60">
-              <div className="h-16 w-16 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center mb-4 backdrop-blur">
-                <Bot className="w-8 h-8" />
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+              <div className="h-16 w-16 rounded-2xl bg-primary/20 border border-input flex items-center justify-center mb-4 backdrop-blur">
+                <Bot className="w-8 h-8 text-primary" />
               </div>
               <p className="text-lg">Start a conversation</p>
-              <p className="text-sm mt-2">Type, record audio, or upload files</p>
+              <p className="text-sm mt-2">
+                {isAuthenticated ? 'Type, record audio, or upload files' : 'Type your question. Login to use voice or file upload.'}
+              </p>
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-xl">
+                {['Explain this concept simply','Give a step-by-step solution','Create practice questions','Summarize this topic','Suggest study plan'].map((s, i) => (
+                  <button key={i} onClick={() => setInput(s)} className="sketchy-button px-3 py-2 rounded-xl border bg-card hover:bg-card/80 text-sm">
+                    {s}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : (
             <AnimatePresence initial={false}>
@@ -121,12 +166,12 @@ export default function AIChat() {
                       <Bot className="w-5 h-5 text-white" />
                     </div>
                   )}
-                  <div className={`max-w-[72%] rounded-2xl px-5 py-4 text-base leading-relaxed shadow-md border ${
+                  <div className={`scribble-bubble max-w-[72%] rounded-2xl px-5 py-4 text-base leading-relaxed shadow-md border ${
                     message.role === 'user'
-                      ? 'bg-gradient-to-br from-cyan-500/30 to-blue-600/30 text-white border-white/20'
+                      ? 'bg-primary/20 text-foreground border-input'
                       : message.role === 'system'
-                      ? 'bg-amber-100/80 text-amber-900 border-amber-200'
-                      : 'bg-white/10 text-white/90 border-white/10 backdrop-blur'
+                      ? 'bg-amber-100 text-amber-900 border-amber-300'
+                      : 'bg-card text-foreground border-input backdrop-blur'
                   }`}>
                     {message.role === 'assistant' || message.role === 'system' ? (
                       <MarkdownRenderer content={message.content} />
@@ -169,9 +214,9 @@ export default function AIChat() {
           )}
         </div>
         
-        <div className="p-8 border-t border-white/10">
+        <div className="p-8 border-t border-input">
           {/* File Upload Section */}
-          {showFileUpload && (
+          {showFileUpload && isAuthenticated && (
             <div className="mb-4">
               <FileUploader 
                 onFileProcessed={handleFileProcessed}
@@ -181,7 +226,7 @@ export default function AIChat() {
           )}
 
           {/* Audio Recorder Section */}
-          {showAudioRecorder && (
+          {showAudioRecorder && isAuthenticated && (
             <div className="mb-4 p-4 bg-gray-50 rounded-lg">
               <AudioRecorder 
                 onTranscriptionComplete={handleTranscription}
@@ -194,13 +239,17 @@ export default function AIChat() {
           <div className="flex gap-3 mb-4">
             <button
               onClick={() => {
+                if (!isAuthenticated) {
+                  toast({ title: 'Login required', description: 'Please log in to use voice input', variant: 'destructive' });
+                  return;
+                }
                 setShowAudioRecorder(!showAudioRecorder);
                 setShowFileUpload(false);
               }}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm transition-colors border ${
                 showAudioRecorder 
-                  ? 'bg-rose-500/20 text-rose-100 border-rose-200/30' 
-                  : 'bg-white/10 text-white/90 hover:bg-white/20 border-white/10 backdrop-blur'
+                  ? 'bg-rose-200 text-rose-900 border-rose-300' 
+                  : 'bg-card text-foreground hover:bg-card/80 border-input backdrop-blur'
               }`}
             >
               <Mic className="w-4 h-4" />
@@ -208,13 +257,17 @@ export default function AIChat() {
             </button>
             <button
               onClick={() => {
+                if (!isAuthenticated) {
+                  toast({ title: 'Login required', description: 'Please log in to upload files', variant: 'destructive' });
+                  return;
+                }
                 setShowFileUpload(!showFileUpload);
                 setShowAudioRecorder(false);
               }}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm transition-colors border ${
                 showFileUpload 
-                  ? 'bg-indigo-500/20 text-indigo-100 border-indigo-200/30' 
-                  : 'bg-white/10 text-white/90 hover:bg-white/20 border-white/10 backdrop-blur'
+                  ? 'bg-violet-200 text-violet-900 border-violet-300' 
+                  : 'bg-card text-foreground hover:bg-card/80 border-input backdrop-blur'
               }`}
             >
               <FileUp className="w-4 h-4" />
@@ -230,16 +283,17 @@ export default function AIChat() {
               onChange={(e) => setInput(e.target.value)}
               placeholder="Type your message..."
               disabled={loading}
-              className="flex-1 px-5 py-3.5 rounded-xl border border-white/10 bg-white/10 text-white/90 placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/40 backdrop-blur"
+              className="sketchy-input flex-1 px-5 py-3.5 rounded-xl border border-input bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 backdrop-blur"
             />
             <button
               type="submit"
               disabled={loading || !input.trim()}
-              className="px-5 py-3.5 rounded-xl bg-gradient-to-br from-cyan-500/80 to-indigo-600/80 text-white hover:from-cyan-500 hover:to-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed border border-white/10"
+              className="sketchy-button px-5 py-3.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed border border-input"
             >
               <Send className="w-4 h-4" />
             </button>
           </form>
+        </div>
         </div>
       </div>
     </div>
