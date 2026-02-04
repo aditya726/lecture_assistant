@@ -16,8 +16,8 @@ class Settings(BaseSettings):
     MONGODB_DB: str
     
     # Ollama
-    OLLAMA_HOST: str = "http://localhost:11434"
-    OLLAMA_MODEL: str = "llama3:8b"
+    OLLAMA_HOST: str = "http://3.110.202.202:11434"
+    OLLAMA_MODEL: str = "tinyllama"
     
     # CORS
     FRONTEND_ORIGIN: str = "http://localhost:5173"
