@@ -120,8 +120,8 @@ export default function FileUploader({ onFileProcessed, onError, acceptedTypes =
       <div
         className={`relative rounded-2xl p-6 text-center transition-colors border ${
           dragActive 
-            ? 'border-cyan-300/40 bg-cyan-400/10' 
-            : 'border-white/10 bg-white/5 hover:bg-white/10'
+            ? 'border-primary/40 bg-primary/10' 
+            : 'border-input bg-card hover:bg-card/80'
         } backdrop-blur`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
@@ -139,40 +139,40 @@ export default function FileUploader({ onFileProcessed, onError, acceptedTypes =
 
         {!selectedFile ? (
           <div className="space-y-2">
-            <Upload className="w-12 h-12 mx-auto text-white/60" />
+            <Upload className="w-12 h-12 mx-auto text-muted-foreground" />
             <div>
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="text-cyan-200 hover:text-white font-medium"
+                className="text-primary hover:text-primary/80 font-medium"
                 disabled={isUploading}
               >
                 Choose a file
               </button>
-              <span className="text-white/60"> or drag and drop</span>
+              <span className="text-muted-foreground"> or drag and drop</span>
             </div>
-            <p className="text-xs text-white/60">
+            <p className="text-xs text-muted-foreground">
               PDF, DOCX, TXT, Images, Videos (max 50MB)
             </p>
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex items-center justify-center gap-3 bg-white/10 border border-white/10 backdrop-blur rounded-xl p-3 text-white/90">
-              <div className="text-cyan-200">
+            <div className="flex items-center justify-center gap-3 bg-card border border-input backdrop-blur rounded-xl p-3 text-foreground">
+              <div className="text-primary">
                 {getFileIcon(selectedFile.name)}
               </div>
               <div className="flex-1 text-left">
                 <p className="text-sm font-medium truncate">
                   {selectedFile.name}
                 </p>
-                <p className="text-xs text-white/60">
+                <p className="text-xs text-muted-foreground">
                   {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                 </p>
               </div>
               {!isUploading && (
                 <button
                   onClick={removeFile}
-                  className="text-white/50 hover:text-white"
+                  className="text-muted-foreground hover:text-foreground"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -183,25 +183,25 @@ export default function FileUploader({ onFileProcessed, onError, acceptedTypes =
               <div className="flex gap-2 justify-center">
                 <button
                   onClick={() => uploadFile('summarization')}
-                  className="px-4 py-2 rounded-xl bg-gradient-to-br from-cyan-500/80 to-indigo-600/80 text-white hover:from-cyan-500 hover:to-indigo-600 text-sm border border-white/10"
+                  className="px-4 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm border border-input"
                 >
                   Summarize
                 </button>
                 <button
                   onClick={() => uploadFile('topic_extraction')}
-                  className="px-4 py-2 rounded-xl bg-purple-600/70 hover:bg-purple-600 text-white text-sm border border-white/10"
+                  className="px-4 py-2 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 text-sm border border-input"
                 >
                   Extract Topics
                 </button>
                 <button
                   onClick={() => uploadFile('keyword_extraction')}
-                  className="px-4 py-2 rounded-xl bg-emerald-600/70 hover:bg-emerald-600 text-white text-sm border border-white/10"
+                  className="px-4 py-2 rounded-xl bg-secondary text-secondary-foreground hover:bg-secondary/90 text-sm border border-input"
                 >
                   Extract Keywords
                 </button>
               </div>
             ) : (
-              <div className="flex items-center justify-center gap-2 text-white/80">
+              <div className="flex items-center justify-center gap-2 text-foreground dark:text-white/80">
                 <Loader2 className="w-5 h-5 animate-spin" />
                 <span className="text-sm">Processing...</span>
               </div>
