@@ -116,7 +116,7 @@ export default function AIChat() {
         </aside>
 
         {/* Chat Area */}
-        <div className="md:col-span-8 sketchy-card rounded-2xl border bg-white/60 backdrop-blur-xl shadow-2xl">
+        <div className="md:col-span-8 sketchy-card rounded-2xl border bg-card backdrop-blur-xl shadow-2xl">
           <div className="p-6 border-b border-input">
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-xl bg-primary/20 flex items-center justify-center border border-input">
@@ -166,7 +166,7 @@ export default function AIChat() {
                       <Bot className="w-5 h-5 text-white" />
                     </div>
                   )}
-                  <div className={`scribble-bubble max-w-[72%] rounded-2xl px-5 py-4 text-base leading-relaxed shadow-md border ${
+                    <div className={`scribble-bubble max-w-[72%] rounded-2xl px-5 py-4 text-base leading-relaxed shadow-md border ${
                     message.role === 'user'
                       ? 'bg-primary/20 text-foreground border-input'
                       : message.role === 'system'
@@ -188,22 +188,22 @@ export default function AIChat() {
               ))}
               {loading && (
                 <div className="flex gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white backdrop-blur">
+                  <div className="w-9 h-9 rounded-xl bg-muted/40 border border-input flex items-center justify-center text-foreground dark:bg-white/10 dark:border-white/20 dark:text-white backdrop-blur">
                     <Bot className="w-5 h-5" />
                   </div>
-                  <div className="rounded-2xl px-5 py-3 bg-white/10 text-white/80 border border-white/10 backdrop-blur flex items-center gap-1">
+                  <div className="rounded-2xl px-5 py-3 bg-muted/40 text-foreground border border-input backdrop-blur flex items-center gap-1 dark:bg-white/10 dark:text-white/80 dark:border-white/10">
                     <motion.span
-                      className="block h-1.5 w-1.5 rounded-full bg-white/80"
+                      className="block h-1.5 w-1.5 rounded-full bg-foreground dark:bg-white/80"
                       animate={{ y: [0, -3, 0] }}
                       transition={{ duration: 0.6, repeat: Infinity, ease: 'easeInOut' }}
                     />
                     <motion.span
-                      className="block h-1.5 w-1.5 rounded-full bg-white/80"
+                      className="block h-1.5 w-1.5 rounded-full bg-foreground dark:bg-white/80"
                       animate={{ y: [0, -3, 0] }}
                       transition={{ duration: 0.6, repeat: Infinity, ease: 'easeInOut', delay: 0.15 }}
                     />
                     <motion.span
-                      className="block h-1.5 w-1.5 rounded-full bg-white/80"
+                      className="block h-1.5 w-1.5 rounded-full bg-foreground dark:bg-white/80"
                       animate={{ y: [0, -3, 0] }}
                       transition={{ duration: 0.6, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
                     />

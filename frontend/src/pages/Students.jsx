@@ -22,19 +22,19 @@ export default function Students() {
     }
   }
 
-  if (loading) return <div className="text-white/80">Loading...</div>
+  if (loading) return <div className="text-foreground dark:text-white/80">Loading...</div>
 
   return (
     <div className="space-y-4">
-      <h2 className="text-3xl font-bold text-white">Students</h2>
+      <h2 className="text-3xl font-bold text-foreground">Students</h2>
       <div className="grid gap-4">
         {students.length === 0 ? (
-          <p className="text-white/70">No students found</p>
+          <p className="text-muted-foreground">No students found</p>
         ) : (
           students.map((student) => (
             <GlassCard key={student.id} className="p-4">
-              <h3 className="font-semibold text-white">{student.name}</h3>
-              <p className="text-sm text-white/70">{student.email}</p>
+              <h3 className="font-semibold text-foreground">{student.name}</h3>
+              <p className="text-sm text-muted-foreground">{student.email}</p>
             </GlassCard>
           ))
         )}
