@@ -9,8 +9,11 @@ from app.schemas.llm import (
     LLMRequest, LLMResponse, TaskType, InputType,
     SummarizationResponse, DoubtExplanationResponse,
     TopicExtractionResponse, DifficultyClassificationResponse,
-    KeywordExtractionResponse
+    KeywordExtractionResponse, DraftNotesResponse,
+    MicronoteRequest, MicronoteResponse
 )
+from app.db.mongodb import get_mongo_db
+from datetime import datetime
 import base64
 import tempfile
 import os
@@ -430,3 +433,104 @@ async def analyze_with_context(
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Analysis error: {str(e)}")
+
+@router.post("/generate-draft-notes")
+async def generate_draft_notes(request: TextRequest):
+    """Generate structured draft notes requiring user editing"""
+    try:
+        result = await ollama_service.generate_draft_notes(request.text)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/save-edited-notes")
+async def save_edited_notes(
+    title: str = Form(...),
+    content: str = Form(...),
+    original_draft: Optional[str] = Form(None),
+    user_id: Optional[str] = Form(None)
+):
+    """Save user-edited notes to MongoDB"""
+    try:
+        db = get_mongo_db()
+        doc = {
+            "user_id": user_id,
+            "title": title,
+            "content": content,
+            "original_draft": original_draft,
+            "edited": True,
+            "created_at": datetime.utcnow()
+        }
+        result = db.draft_notes.insert_one(doc)
+        return {"id": str(result.inserted_id), "message": "Notes saved successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save notes: {str(e)}")
+
+@router.post("/expand-micronote")
+async def expand_micronote(request: MicronoteRequest):
+    """Expand a micronote key phrase using transcript context"""
+    try:
+        result = await ollama_service.expand_micronote(
+            request.key_phrase,
+            request.transcript_context,
+            request.style_preference
+        )
+        
+        # Check if parsing failed
+        if "error" in result:
+            # Return a fallback response with error details
+            return {
+                "original_phrase": request.key_phrase,
+                "expanded_content": f"Unable to parse AI response. Please try again.\n\nRaw content: {result.get('raw_response', '')[:500]}",
+                "relevant_quotes": [],
+                "timestamp_references": []
+            }
+        
+        # Ensure all required fields exist with defaults
+        response_data = {
+            "original_phrase": result.get("original_phrase", request.key_phrase),
+            "expanded_content": result.get("expanded_content", "No expansion generated"),
+            "relevant_quotes": result.get("relevant_quotes", []),
+            "timestamp_references": result.get("timestamp_references", [])
+        }
+        
+        # Optionally save to database
+        if request.user_id:
+            db = get_mongo_db()
+            db.micronotes.insert_one({
+                "user_id": request.user_id,
+                "key_phrase": request.key_phrase,
+                "expanded_content": response_data["expanded_content"],
+                "style": request.style_preference,
+                "created_at": datetime.utcnow()
+            })
+        
+        return response_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Micronote expansion error: {str(e)}")
+
+@router.get("/draft-notes")
+async def get_draft_notes(user_id: Optional[str] = None, skip: int = 0, limit: int = 50):
+    """Get all draft notes for a user"""
+    try:
+        db = get_mongo_db()
+        query = {"user_id": user_id} if user_id else {}
+        notes = list(db.draft_notes.find(query).sort("created_at", -1).skip(skip).limit(limit))
+        for note in notes:
+            note['_id'] = str(note['_id'])
+        return {"notes": notes}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/micronotes")
+async def get_micronotes(user_id: Optional[str] = None, skip: int = 0, limit: int = 50):
+    """Get all micronotes for a user"""
+    try:
+        db = get_mongo_db()
+        query = {"user_id": user_id} if user_id else {}
+        notes = list(db.micronotes.find(query).sort("created_at", -1).skip(skip).limit(limit))
+        for note in notes:
+            note['_id'] = str(note['_id'])
+        return {"notes": notes}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
