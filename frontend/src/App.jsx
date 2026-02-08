@@ -10,6 +10,8 @@ import AIExplain from './pages/AIExplain';
 import AITopics from './pages/AITopics';
 import AIKeywords from './pages/AIKeywords';
 import AIDifficulty from './pages/AIDifficulty';
+import AIDraftNotes from './pages/AIDraftNotes';
+import AINoteTaking from './pages/AINoteTaking';
 import Texts from './pages/Texts';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -32,6 +34,8 @@ function App() {
             <Route path="/ai-topics" element={<ProtectedRoute><AITopics /></ProtectedRoute>} />
             <Route path="/ai-keywords" element={<ProtectedRoute><AIKeywords /></ProtectedRoute>} />
             <Route path="/ai-difficulty" element={<ProtectedRoute><AIDifficulty /></ProtectedRoute>} />
+            <Route path="/draft-notes" element={<ProtectedRoute><AIDraftNotes /></ProtectedRoute>} />
+            <Route path="/note-taking" element={<ProtectedRoute><AINoteTaking /></ProtectedRoute>} />
             <Route path="/texts" element={<ProtectedRoute><Texts /></ProtectedRoute>} />
             </Routes>
           </Layout>

@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import React from 'react'
 import { motion } from 'framer-motion'
 import GlassCard from '../components/ui/GlassCard'
-import { Sparkles, Mic, Upload, MessageSquare, BookOpen, Lightbulb, Tag, Key, BarChart, FileText } from 'lucide-react'
+import { Sparkles, Mic, Upload, MessageSquare, BookOpen, Lightbulb, Tag, Key, BarChart, FileText, Edit3, Zap } from 'lucide-react'
  
 export default function Home() {
   const container = {
@@ -25,6 +25,8 @@ export default function Home() {
     { title: 'Extract Topics', desc: 'Main themes and ideas', icon: Tag, to: '/ai-topics', iconClass: 'text-orange-300' },
     { title: 'Keywords', desc: 'Important terms & phrases', icon: Key, to: '/ai-keywords', iconClass: 'text-pink-300' },
     { title: 'Difficulty', desc: 'Assess content difficulty', icon: BarChart, to: '/ai-difficulty', iconClass: 'text-red-300' },
+    { title: 'Draft Notes', desc: 'Active learning with AI drafts', icon: Edit3, to: '/draft-notes', iconClass: 'text-yellow-300', badge: 'New' },
+    { title: 'Micronotes', desc: 'Expand key phrases from lectures', icon: Zap, to: '/note-taking', iconClass: 'text-purple-300', badge: 'New' },
     { title: 'Texts', desc: 'Manage your documents', icon: FileText, to: '/texts', iconClass: 'text-slate-200' },
   ]
 
@@ -150,8 +152,15 @@ export default function Home() {
                       <div className={`rounded-xl border border-input bg-card p-3`}>
                         <Icon className="h-5 w-5" />
                       </div>
-                      <div>
-                        <div className="font-semibold text-foreground">{f.title}</div>
+                      <div className="flex-1">
+                        <div className="font-semibold text-foreground flex items-center gap-2">
+                          {f.title}
+                          {f.badge && (
+                            <span className="px-2 py-0.5 text-xs bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full">
+                              {f.badge}
+                            </span>
+                          )}
+                        </div>
                         <div className="text-sm text-muted-foreground">{f.desc}</div>
                       </div>
                     </div>

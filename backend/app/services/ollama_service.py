@@ -185,17 +185,34 @@ Respond in JSON format:
     def _parse_json_response(self, response: str) -> dict:
         """Parse JSON from LLM response"""
         try:
-            # Try to find JSON in the response
-            json_match = re.search(r'\{.*\}', response, re.DOTALL)
-            if json_match:
-                return json.loads(json_match.group())
-            # If no JSON found, try parsing the whole response
-            return json.loads(response)
-        except json.JSONDecodeError:
+            # Clean up the response - remove markdown code blocks and extra text
+            cleaned = response.strip()
+            
+            # Remove markdown code blocks
+            cleaned = re.sub(r'^```json\s*', '', cleaned)
+            cleaned = re.sub(r'^```\s*', '', cleaned)
+            cleaned = re.sub(r'\s*```$', '', cleaned)
+            
+            # Find JSON object (first { to last })
+            start = cleaned.find('{')
+            end = cleaned.rfind('}')
+            
+            if start != -1 and end != -1 and end > start:
+                json_str = cleaned[start:end+1]
+                # Fix common JSON issues
+                json_str = json_str.replace("\n", " ")
+                json_str = re.sub(r',\s*}', '}', json_str)  # Remove trailing commas
+                json_str = re.sub(r',\s*]', ']', json_str)  # Remove trailing commas in arrays
+                return json.loads(json_str)
+            
+            # Try parsing the whole response
+            return json.loads(cleaned)
+        except (json.JSONDecodeError, ValueError) as e:
             # If parsing fails, return a structured error
             return {
                 "error": "Failed to parse response",
-                "raw_response": response
+                "raw_response": response,
+                "parse_error": str(e)
             }
     
     async def analyze_image(self, image_base64: str, prompt: str = None) -> dict:
@@ -281,6 +298,86 @@ Respond in JSON format:
     ],
     "key_takeaways": ["takeaway1", "takeaway2"],
     "study_notes": ["note1", "note2", "note3"]
+}}"""
+        
+        response = await self.generate_response(prompt)
+        return self._parse_json_response(response)
+
+    async def generate_draft_notes(self, text: str, context: str = None) -> dict:
+        """Generate structured draft notes requiring user editing"""
+        prompt = f"""Generate INCOMPLETE draft notes from the following content. 
+The notes should be 60-70% complete to encourage active learning:
+
+Text: {text}
+{f'Context: {context}' if context else ''}
+
+Create a structured response with:
+1. A descriptive title
+2. 3-5 main sections with PARTIAL information (leave gaps for user to fill)
+3. Use placeholders like [ADD YOUR UNDERSTANDING], [EXPLAIN IN YOUR WORDS], [INSERT EXAMPLE]
+4. List 3-4 suggestions for what the user should add/expand
+5. Rate completeness (aim for 60-70%)
+
+The goal is to make students actively engage with the material, not passively consume it.
+
+Respond in JSON format:
+{{
+    "draft_title": "Draft: [Topic Name]",
+    "sections": [
+        {{"title": "Introduction", "content": "Brief intro... [ADD YOUR UNDERSTANDING OF WHY THIS MATTERS]", "editable": true}},
+        {{"title": "Key Concepts", "content": "Concept 1: definition... [EXPLAIN IN YOUR WORDS]\\nConcept 2: [RESEARCH AND ADD]", "editable": true}},
+        {{"title": "Examples", "content": "[INSERT EXAMPLE 1]\\n[INSERT EXAMPLE 2]", "editable": true}}
+    ],
+    "suggested_improvements": [
+        "Add examples for the key concepts",
+        "Expand the introduction with real-world applications",
+        "Include your own understanding of why this is important"
+    ],
+    "completeness_score": 65
+}}"""
+        
+        response = await self.generate_response(prompt)
+        return self._parse_json_response(response)
+    
+    async def expand_micronote(
+        self, 
+        key_phrase: str, 
+        transcript_context: str, 
+        style: str = "detailed"
+    ) -> dict:
+        """Expand a key phrase using transcript context"""
+        
+        style_instructions = {
+            "detailed": "Write 2-3 comprehensive paragraphs with examples and explanations",
+            "concise": "Write 3-5 clear sentences capturing the essence",
+            "bullet_points": "Create 5-7 detailed bullet points with explanations"
+        }
+        
+        prompt = f"""You have a lecture transcript and a student's key phrase. 
+Expand the key phrase into a complete note using relevant information from the transcript.
+
+Key Phrase: "{key_phrase}"
+
+Full Transcript:
+{transcript_context}
+
+Instructions:
+1. Find all relevant information in the transcript related to the key phrase
+2. {style_instructions.get(style, style_instructions["detailed"])}
+3. Extract 2-3 direct quotes from the transcript that support this topic
+4. Identify timestamp markers if present (e.g., [00:15:30] or "at 15 minutes")
+5. Make the expansion natural, study-friendly, and comprehensive
+6. Connect related ideas from different parts of the transcript
+
+Respond in JSON format:
+{{
+    "original_phrase": "{key_phrase}",
+    "expanded_content": "Your expanded explanation here...",
+    "relevant_quotes": ["Direct quote 1 from transcript", "Direct quote 2 from transcript"],
+    "timestamp_references": [
+        {{"time": "00:15:30", "relevance": "Main definition provided"}},
+        {{"time": "00:22:15", "relevance": "Example discussed"}}
+    ]
 }}"""
         
         response = await self.generate_response(prompt)

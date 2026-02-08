@@ -50,21 +50,10 @@ class OCRService:
                 raise Exception("; ".join(init_errors))
 
             self._available = True
-            try:
-                # Log Paddle versions and MKLDNN flag for clarity
-                import paddle  # type: ignore
-                mkldnn = os.environ.get('FLAGS_use_mkldnn', 'unset')
-                print(f"[OCR] PaddleOCR initialized (lang=en). Paddle {getattr(paddle, '__version__', 'unknown')} FLAGS_use_mkldnn={mkldnn}")
-            except Exception:
-                pass
         except Exception as e:
             # Record error and mark unavailable; callers can handle fallback
             self._init_error = str(e)
             self._available = False
-            try:
-                print(f"[OCR] Initialization failed: {self._init_error}")
-            except Exception:
-                pass
 
     def is_available(self) -> bool:
         self._ensure_initialized()
@@ -88,44 +77,11 @@ class OCRService:
             return {"success": False, "text": "", "boxes": [], "error": "Image path does not exist"}
 
         if not self._available or self._ocr is None:
-            try:
-                print(f"[OCR] Skipping OCR (not available). Error: {self._init_error}")
-            except Exception:
-                pass
             return {"success": False, "text": "", "boxes": [], "error": self._init_error or "PaddleOCR not available"}
 
         try:
             import cv2  # type: ignore
             import tempfile
-            import uuid
-            import time
-
-            # Prepare debug directory and naming
-            debug_files = []
-            try:
-                base_name = os.path.splitext(os.path.basename(image_path))[0]
-                debug_dir = os.path.join(os.getcwd(), "ocr_debug")
-                os.makedirs(debug_dir, exist_ok=True)
-                debug_token = f"{int(time.time())}_{uuid.uuid4().hex[:8]}"
-
-                def save_debug(arr, label: str):
-                    try:
-                        path = os.path.join(debug_dir, f"{base_name}_{debug_token}_{label}.png")
-                        cv2.imwrite(path, arr)
-                        debug_files.append(path)
-                        print(f"[OCR][DEBUG] Saved {label} image to: {path}")
-                    except Exception as e:
-                        print(f"[OCR][DEBUG] Failed to save {label}: {e}")
-                
-            except Exception:
-                # If debug saving setup fails, proceed without saving
-                def save_debug(arr, label: str):
-                    return
-
-            try:
-                print(f"[OCR] Starting OCR on: {image_path}")
-            except Exception:
-                pass
 
             def _run(path: str):
                 # Some PaddleOCR versions don't accept 'cls' in the ocr() call; rely on init setting
@@ -153,13 +109,6 @@ class OCRService:
 
             stage_used = "original"
             boxes, lines = _run(image_path)
-            # Save original for debugging
-            try:
-                orig_img = cv2.imread(image_path)
-                if orig_img is not None:
-                    save_debug(orig_img, "original")
-            except Exception:
-                pass
             combined_text = "\n".join(lines).strip()
 
             # If empty, try preprocessing (grayscale, blur, adaptive threshold)
@@ -180,11 +129,9 @@ class OCRService:
                         with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp:
                             cv2.imwrite(tmp.name, thr)
                             boxes_thr, lines_thr = _run(tmp.name)
-                            save_debug(thr, "preprocess_binary")
                         with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp2:
                             cv2.imwrite(tmp2.name, inv)
                             boxes_inv, lines_inv = _run(tmp2.name)
-                            save_debug(inv, "preprocess_inverted")
 
                         # Choose the better of thr vs inv by count, tiebreaker by avg confidence
                         cand = [
@@ -213,7 +160,6 @@ class OCRService:
                         with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp:
                             cv2.imwrite(tmp.name, up)
                             boxes_up, lines_up = _run(tmp.name)
-                            save_debug(up, "upscaled")
                         if len(lines_up) > len(lines):
                             stage_used = "upscaled"
                             boxes = boxes_up
@@ -244,7 +190,6 @@ class OCRService:
                                 cv2.imwrite(tmp.name, arr)
                                 b, l = _run(tmp.name)
                                 candidates.append((label, b, l))
-                                save_debug(arr, label)
 
                         def avg_conf2(bx):
                             if not bx:
@@ -269,11 +214,9 @@ class OCRService:
                         with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp:
                             cv2.imwrite(tmp.name, rot90)
                             b90, l90 = _run(tmp.name)
-                            save_debug(rot90, "rot90")
                         with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp2:
                             cv2.imwrite(tmp2.name, rot270)
                             b270, l270 = _run(tmp2.name)
-                            save_debug(rot270, "rot270")
                         # choose best rotation
                         rotation_best = max([("rot90", b90, l90), ("rot270", b270, l270)], key=lambda t: (len(t[2]), avg_conf([*t[1]])))
                         if len(rotation_best[2]) > len(lines):
@@ -283,16 +226,6 @@ class OCRService:
                             combined_text = "\n".join(lines).strip()
                 except Exception:
                     pass
-
-            # Debug print of extracted text (preview) and stage
-            try:
-                if combined_text:
-                    preview = combined_text[:200].replace("\n", " ")
-                    print(f"[OCR] ({stage_used}) Text detected from {image_path}: '{preview}'{'...' if len(combined_text) > 200 else ''} (chars={len(combined_text)})")
-                else:
-                    print(f"[OCR] No text detected from {image_path} after original, preprocess, and upscale.")
-            except Exception:
-                pass
 
             return {
                 "success": True,

@@ -59,18 +59,66 @@ export default function AIChat() {
     let content = `📄 File processed: ${data.filename}\n\n`;
     
     if (data.ai_analysis) {
-      if (data.ai_analysis.summary) {
-        content += `**Summary:**\n${data.ai_analysis.summary}\n\n`;
+      // Check for error in AI analysis
+      if (data.ai_analysis.error) {
+        content += `⚠️ **Analysis Error:** ${data.ai_analysis.error}\n\n`;
+        if (data.ai_analysis.raw_response) {
+          content += `**Raw Response:**\n${data.ai_analysis.raw_response}\n\n`;
+        }
+      } else {
+        let hasContent = false;
+        
+        // Handle Summarization format
+        if (data.ai_analysis.summary) {
+          content += `**Summary:**\n${data.ai_analysis.summary}\n\n`;
+          hasContent = true;
+        }
+        if (data.ai_analysis.key_points && data.ai_analysis.key_points.length > 0) {
+          content += `**Key Points:**\n${data.ai_analysis.key_points.map(p => `• ${p}`).join('\n')}\n\n`;
+          hasContent = true;
+        }
+        
+        // Handle Topic Extraction format
+        if (data.ai_analysis.main_topics && data.ai_analysis.main_topics.length > 0) {
+          content += `**Main Topics:**\n${data.ai_analysis.main_topics.map(t => `• ${t}`).join('\n')}\n\n`;
+          hasContent = true;
+        }
+        if (data.ai_analysis.subtopics && data.ai_analysis.subtopics.length > 0) {
+          content += `**Subtopics:**\n${data.ai_analysis.subtopics.map(t => `• ${t}`).join('\n')}\n\n`;
+          hasContent = true;
+        }
+        
+        // Handle Keyword Extraction format
+        if (data.ai_analysis.keywords && data.ai_analysis.keywords.length > 0) {
+          content += `**Keywords:** ${data.ai_analysis.keywords.join(', ')}\n\n`;
+          hasContent = true;
+        }
+        if (data.ai_analysis.phrases && data.ai_analysis.phrases.length > 0) {
+          content += `**Key Phrases:**\n${data.ai_analysis.phrases.map(p => `• ${p}`).join('\n')}\n\n`;
+          hasContent = true;
+        }
+        
+        // Handle Difficulty Classification format
+        if (data.ai_analysis.difficulty_level) {
+          content += `**Difficulty Level:** ${data.ai_analysis.difficulty_level}\n\n`;
+          hasContent = true;
+        }
+        if (data.ai_analysis.reasoning) {
+          content += `**Reasoning:**\n${data.ai_analysis.reasoning}\n\n`;
+          hasContent = true;
+        }
+        if (data.ai_analysis.prerequisites && data.ai_analysis.prerequisites.length > 0) {
+          content += `**Prerequisites:**\n${data.ai_analysis.prerequisites.map(p => `• ${p}`).join('\n')}\n\n`;
+          hasContent = true;
+        }
+        
+        // If no expected fields found, show the raw analysis object for debugging
+        if (!hasContent) {
+          content += `**Debug - Raw Analysis:**\n\`\`\`json\n${JSON.stringify(data.ai_analysis, null, 2)}\n\`\`\`\n\n`;
+        }
       }
-      if (data.ai_analysis.key_points) {
-        content += `**Key Points:**\n${data.ai_analysis.key_points.map(p => `• ${p}`).join('\n')}\n\n`;
-      }
-      if (data.ai_analysis.main_topics) {
-        content += `**Topics:**\n${data.ai_analysis.main_topics.map(t => `• ${t}`).join('\n')}\n\n`;
-      }
-      if (data.ai_analysis.keywords) {
-        content += `**Keywords:** ${data.ai_analysis.keywords.join(', ')}\n`;
-      }
+    } else {
+      content += `*No AI analysis available for this file.*\n`;
     }
     
     setMessages(prev => [...prev, {
