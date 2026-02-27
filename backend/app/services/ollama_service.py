@@ -113,27 +113,27 @@ Respond ONLY with valid, perfectly formatted JSON. No other text, no markdown bl
     
     async def process_lecture(self, text: str, context: str = None) -> dict:
         """Process a lecture transcript to provide summary, tags, and resources in one go."""
-        prompt = f"""Analyze the following lecture transcript:
+        prompt = f"""You are an expert educational AI. Process the following lecture transcript:
 
 Text: {text}
 {f'Context: {context}' if context else ''}
 
 Provide a comprehensive analysis in JSON format covering:
-1. "summary": A clean, organized summary of the lecture.
+1. "summary": A clean, detailed, organized summary of the lecture.
 2. "key_points": A list of important bullet points (5-8 points).
 3. "tags": An object with "subject", "topic", and "difficulty" (e.g., beginner, intermediate, advanced).
 4. "related_resources": A list of 3-5 search queries or topics the student can use to find related YouTube videos, papers, or PDFs.
 
-Respond ONLY with valid JSON exactly matching this format:
+Respond ONLY with valid, perfectly formatted JSON. No other text, no markdown blocks, no conversational text. Include quotes around ALL strings. Format exactly like this:
 {{
-    "summary": "...",
-    "key_points": ["point1", "point2", "point3"],
+    "summary": "Full summary text here...",
+    "key_points": ["point 1", "point 2", "point 3"],
     "tags": {{
-        "subject": "...",
-        "topic": "...",
-        "difficulty": "..."
+        "subject": "Math",
+        "topic": "Calculus",
+        "difficulty": "intermediate"
     }},
-    "related_resources": ["resource1", "resource2", "resource3"]
+    "related_resources": ["resource 1", "resource 2", "resource 3"]
 }}"""
         response = await self.generate_response(prompt)
         return self._parse_json_response(response)
@@ -235,13 +235,18 @@ Respond in JSON format:
             # Try parsing the whole response
             return json.loads(cleaned, strict=False)
         except (json.JSONDecodeError, ValueError) as e:
-            # Fallback for completely malformed JSON missing quotes:
-            # We enforce a clean default dict covering major downstream endpoints so the frontend avoids "undefined"
+            # Fallback for completely malformed JSON:
+            # Instead of returning a generic error, we return the raw LLM output as the summary/explanation 
+            # so the user doesn't lose the hard work the AI did.
+            raw_text = response.strip()
+            if not raw_text:
+                raw_text = "The AI provided an empty response. Please try again."
+                
             return {
-                "summary": "The AI provided an analysis, but the format was invalid. Please try again or use a shorter transcript.",
-                "explanation": "The AI provided a response, but the format was invalid. Please try highlighting a shorter phrase or trying again.",
-                "key_points": ["Could not parse key points."],
-                "tags": {"subject": "Unknown", "topic": "Unknown", "difficulty": "Unknown"},
+                "summary": raw_text,
+                "explanation": raw_text,
+                "key_points": [],
+                "tags": {"subject": "General", "topic": "Concept", "difficulty": "Unknown"},
                 "related_resources": [],
                 "topics": [],
                 "questions": [],

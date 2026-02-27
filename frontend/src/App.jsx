@@ -8,6 +8,7 @@ import Texts from './pages/Texts';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import GoogleCallback from './pages/GoogleCallback';
+import LandingPage from './pages/LandingPage';
 
 function App() {
   return (
@@ -19,7 +20,8 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/auth/callback" element={<GoogleCallback />} />
-              <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/workspace" element={<ProtectedRoute><Home /></ProtectedRoute>} />
               <Route path="/texts" element={<ProtectedRoute><Texts /></ProtectedRoute>} />
             </Routes>
           </Layout>
