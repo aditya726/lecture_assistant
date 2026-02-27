@@ -111,6 +111,33 @@ Respond in JSON format:
         response = await self.generate_response(prompt)
         return self._parse_json_response(response)
     
+    async def process_lecture(self, text: str, context: str = None) -> dict:
+        """Process a lecture transcript to provide summary, tags, and resources in one go."""
+        prompt = f"""Analyze the following lecture transcript:
+
+Text: {text}
+{f'Context: {context}' if context else ''}
+
+Provide a comprehensive analysis in JSON format covering:
+1. "summary": A clean, organized summary of the lecture.
+2. "key_points": A list of important bullet points (5-8 points).
+3. "tags": An object with "subject", "topic", and "difficulty" (e.g., beginner, intermediate, advanced).
+4. "related_resources": A list of 3-5 search queries or topics the student can use to find related YouTube videos, papers, or PDFs.
+
+Respond ONLY with valid JSON exactly matching this format:
+{{
+    "summary": "...",
+    "key_points": ["point1", "point2", "point3"],
+    "tags": {{
+        "subject": "...",
+        "topic": "...",
+        "difficulty": "..."
+    }},
+    "related_resources": ["resource1", "resource2", "resource3"]
+}}"""
+        response = await self.generate_response(prompt)
+        return self._parse_json_response(response)
+
     async def extract_topics(self, text: str) -> dict:
         """Extract main topics and subtopics from text"""
         prompt = f"""Analyze the following text comprehensively and extract detailed information:
@@ -199,20 +226,22 @@ Respond in JSON format:
             
             if start != -1 and end != -1 and end > start:
                 json_str = cleaned[start:end+1]
-                # Fix common JSON issues
-                json_str = json_str.replace("\n", " ")
+                # Fix common JSON issues keeping newlines safe
                 json_str = re.sub(r',\s*}', '}', json_str)  # Remove trailing commas
                 json_str = re.sub(r',\s*]', ']', json_str)  # Remove trailing commas in arrays
-                return json.loads(json_str)
+                # Replace unescaped newlines inside strings, or just use strict=False
+                return json.loads(json_str, strict=False)
             
             # Try parsing the whole response
-            return json.loads(cleaned)
+            return json.loads(cleaned, strict=False)
         except (json.JSONDecodeError, ValueError) as e:
-            # If parsing fails, return a structured error
+            # Fallback for completely malformed JSON missing quotes:
+            # We enforce a clean default dict so the frontend doesn't crash with "undefined"
             return {
-                "error": "Failed to parse response",
-                "raw_response": response,
-                "parse_error": str(e)
+                "summary": "The AI provided an analysis, but the format was invalid. Please try again or use a shorter transcript.",
+                "key_points": ["Could not parse key points."],
+                "tags": {"subject": "Unknown", "topic": "Unknown", "difficulty": "Unknown"},
+                "related_resources": []
             }
     
     async def analyze_image(self, image_base64: str, prompt: str = None) -> dict:

@@ -38,6 +38,10 @@ class ExplainRequest(BaseModel):
 class TextRequest(BaseModel):
     text: str
 
+class ProcessLectureRequest(BaseModel):
+    text: str
+    context: Optional[str] = None
+
 @router.post("/generate")
 async def generate(request: PromptRequest):
     """Generate AI response"""
@@ -53,6 +57,15 @@ async def chat(request: ChatRequest):
     try:
         response = await ollama_service.chat(request.messages)
         return {"response": response}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/process-lecture")
+async def process_lecture(request: ProcessLectureRequest):
+    """Unified endpoint for processing a lecture transcript."""
+    try:
+        result = await ollama_service.process_lecture(request.text, request.context)
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
