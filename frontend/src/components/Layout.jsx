@@ -24,7 +24,7 @@ export default function Layout({ children }) {
       <nav className="sticky top-0 z-20 backdrop-blur-xl bg-card/70 dark:bg-card/60 border-b border-border">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <Link to="/" className="text-lg font-semibold tracking-tight text-foreground hover:text-muted-foreground transition-colors" style={{fontFamily:'Gloria Hallelujah'}}>
+            <Link to="/" className="text-xl font-bold tracking-tight text-foreground hover:text-muted-foreground transition-colors">
               Tutor Lab
             </Link>
             <div className="flex items-center gap-4">
