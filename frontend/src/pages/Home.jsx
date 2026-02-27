@@ -121,16 +121,21 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] p-4 md:p-6 lg:p-8 overflow-hidden bg-background">
+    <div className="flex flex-col h-[calc(100vh-4rem)] p-4 md:p-6 lg:p-8 overflow-hidden bg-background relative isolate">
+      {/* Modern subtle ambient glow backgrounds */}
+      <div className="absolute inset-0 -z-10 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-primary/10 blur-[100px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-accent/10 blur-[100px]" />
+      </div>
 
       {/* Header & Controls */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4 px-2">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
-            <Zap className="h-6 w-6 text-amber-400" />
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2 drop-shadow-sm">
+            <Zap className="h-6 w-6 text-primary" />
             Lecture Workspace
           </h1>
-          <p className="text-muted-foreground mt-1">Real-time transcripts, smart notes, tags & doubts.</p>
+          <p className="text-muted-foreground mt-1.5 font-medium">Real-time transcripts, smart notes, tags & doubts.</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -150,17 +155,17 @@ export default function Home() {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isProcessing}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-card border border-input text-foreground hover:bg-card/80 transition-colors disabled:opacity-50"
+              className="modern-button flex items-center gap-2 px-5 py-2.5 rounded-full bg-card/80 backdrop-blur-md border border-border/50 text-foreground hover:bg-muted text-sm font-semibold shadow-sm transition-all"
             >
-              <Upload className="w-4 h-4" />
-              <span className="text-sm font-medium">Upload Audio</span>
+              <Upload className="w-4 h-4 text-muted-foreground" />
+              Upload Audio
             </button>
           </div>
 
           {(transcript || notes) && (
             <button
               onClick={resetWorkspace}
-              className="px-4 py-2 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
+              className="modern-button px-5 py-2.5 rounded-full text-sm font-semibold text-destructive/90 bg-destructive/10 hover:bg-destructive/20 transition-colors"
             >
               Reset
             </button>
@@ -176,23 +181,29 @@ export default function Home() {
       )}
 
       {/* Main Split View */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-0">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8 min-h-0">
 
         {/* Left Pane: Transcript */}
-        <GlassCard className="flex flex-col overflow-hidden border-border/50 bg-card/40">
-          <div className="p-4 border-b border-border/50 bg-card/60 flex items-center gap-2">
-            <Mic className="w-4 h-4 text-primary" />
-            <h2 className="font-semibold text-foreground text-sm uppercase tracking-wider">Live Transcript</h2>
-            {isProcessing && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground ml-2" />}
+        <div className="modern-glass flex flex-col overflow-hidden rounded-2xl relative">
+          <div className="px-5 py-4 border-b border-border/40 bg-muted/20 flex items-center gap-2">
+            <div className="p-1.5 rounded-md bg-primary/10">
+              <Mic className="w-4 h-4 text-primary" />
+            </div>
+            <h2 className="font-semibold text-foreground text-sm tracking-wide">Live Transcript</h2>
+            {isProcessing && <Loader2 className="w-3.5 h-3.5 animate-spin text-primary ml-2" />}
           </div>
-          <div className="flex-1 p-5 overflow-y-auto custom-scrollbar whitespace-pre-wrap text-foreground italic leading-relaxed text-sm md:text-base">
-            {transcript || (
-              <span className="text-muted-foreground">
-                Start recording or upload an audio file to see the transcript here...
-              </span>
+          <div className="flex-1 p-6 overflow-y-auto custom-scrollbar text-foreground leading-relaxed text-[15px]">
+            {transcript ? (
+              <div className="whitespace-pre-wrap">{transcript}</div>
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground/60 text-center px-8">
+                <Mic className="w-12 h-12 mb-4 opacity-20" />
+                <p className="font-medium text-lg text-foreground/50">Ready to transcribe</p>
+                <p className="text-sm mt-1">Start recording or upload an audio file</p>
+              </div>
             )}
           </div>
-        </GlassCard>
+        </div>
 
         {/* Right Pane: Notes & Insights */}
         <div className="flex flex-col gap-4 overflow-hidden">
@@ -236,22 +247,24 @@ export default function Home() {
           </AnimatePresence>
 
           {/* Notes Container */}
-          <GlassCard className="flex-1 flex flex-col overflow-hidden border-border/50 bg-card/40 relative">
-            <div className="p-4 border-b border-border/50 bg-card/60 flex items-center justify-between">
+          <div className="modern-glass flex-1 flex flex-col overflow-hidden rounded-2xl relative shadow-sm">
+            <div className="px-5 py-4 border-b border-border/40 bg-muted/20 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-emerald-500" />
-                <h2 className="font-semibold text-foreground text-sm uppercase tracking-wider">Organized Notes</h2>
+                <div className="p-1.5 rounded-md bg-emerald-500/10">
+                  <BookOpen className="w-4 h-4 text-emerald-500" />
+                </div>
+                <h2 className="font-semibold text-foreground text-sm tracking-wide">Organized Notes</h2>
               </div>
 
               {/* Floating Doubt Now button trigger */}
               <AnimatePresence>
                 {selectedText && (
                   <motion.button
-                    initial={{ opacity: 0, scale: 0.8 }}
+                    initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
                     onClick={handleDoubtNow}
-                    className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500 text-white text-xs font-medium hover:bg-indigo-600 shadow-lg shadow-indigo-500/20 transition-colors"
+                    className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-lg shadow-primary/25 hover:bg-primary/90 transition-all active:scale-95"
                   >
                     <HelpCircle className="w-3.5 h-3.5" />
                     Doubt Now
@@ -261,39 +274,42 @@ export default function Home() {
             </div>
 
             <div
-              className="flex-1 p-5 overflow-y-auto custom-scrollbar text-base"
+              className="flex-1 p-6 overflow-y-auto custom-scrollbar text-[15px]"
               onMouseUp={handleSelectionChange}
               onKeyUp={handleSelectionChange}
             >
               {notes ? (
-                <div className="prose prose-sm dark:prose-invert max-w-none">
+                <div className="prose prose-slate dark:prose-invert max-w-none">
                   <MarkdownRenderer content={notes} />
                 </div>
               ) : (
-                <div className="h-full flex flex-col items-center justify-center text-muted-foreground text-center">
+                <div className="h-full flex flex-col items-center justify-center text-muted-foreground/60 text-center px-8">
                   <BookOpen className="w-12 h-12 mb-4 opacity-20" />
-                  <p>AI generated notes will appear here.</p>
-                  <p className="text-sm mt-2 opacity-70">Highlight any text here later to ask a doubt!</p>
+                  <p className="font-medium text-lg text-foreground/50">No notes yet</p>
+                  <p className="text-sm mt-1">Notes will generate automatically</p>
                 </div>
               )}
             </div>
-          </GlassCard>
+          </div>
         </div>
       </div>
 
       {/* Doubt Explanation Modal */}
       <AnimatePresence>
         {showDoubtModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
             <motion.div
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              initial={{ opacity: 0, y: 30, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className="bg-card w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden border border-border flex flex-col max-h-[85vh]"
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="bg-card w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden border border-border/50 flex flex-col max-h-[85vh]"
             >
-              <div className="p-4 border-b border-border flex items-center justify-between bg-indigo-500/10">
-                <h3 className="font-bold text-lg text-foreground flex items-center gap-2">
-                  <HelpCircle className="w-5 h-5 text-indigo-500" />
+              <div className="px-6 py-4 border-b border-border/40 flex items-center justify-between bg-muted/30">
+                <h3 className="font-semibold text-[17px] text-foreground flex items-center gap-2">
+                  <div className="p-1.5 rounded-md bg-primary/10">
+                    <HelpCircle className="w-4 h-4 text-primary" />
+                  </div>
                   Doubt Resolved
                 </h3>
                 <button onClick={() => setShowDoubtModal(false)} className="text-muted-foreground hover:text-foreground p-1">
@@ -301,18 +317,19 @@ export default function Home() {
                 </button>
               </div>
 
-              <div className="p-5 overflow-y-auto custom-scrollbar flex-1 bg-background">
-                <div className="mb-4 p-3 rounded-lg bg-card border border-border text-sm italic text-foreground/80 border-l-4 border-l-indigo-500">
+              <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-background/50">
+                <div className="mb-6 p-4 rounded-xl bg-card border border-border/50 text-[15px] italic text-muted-foreground shadow-sm relative">
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-xl opacity-80" />
                   "{selectedText}"
                 </div>
 
                 {isExplaining ? (
-                  <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
-                    <Loader2 className="w-8 h-8 animate-spin mb-4 text-indigo-500" />
-                    <p>Generating a simple explanation...</p>
+                  <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                    <Loader2 className="w-8 h-8 animate-spin mb-4 text-primary" />
+                    <p className="font-medium">Formulating your explanation...</p>
                   </div>
                 ) : (
-                  <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <div className="prose prose-slate dark:prose-invert max-w-none text-[15px] leading-relaxed">
                     <MarkdownRenderer content={doubtExplanation || "No explanation available."} />
                   </div>
                 )}

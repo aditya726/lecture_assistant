@@ -101,9 +101,9 @@ Provide an in-depth response including:
 
 Be descriptive, educational, and thorough in your response.
 
-Respond in JSON format:
+Respond ONLY with valid, perfectly formatted JSON. No other text, no markdown blocks, no conversational text. Include quotes around ALL strings. Format exactly like this:
 {{
-    "explanation": "...",
+    "explanation": "Detailed explanation here...",
     "examples": ["example1", "example2", "example3", "example4"],
     "related_concepts": ["concept1", "concept2", "concept3"]
 }}"""
@@ -236,12 +236,18 @@ Respond in JSON format:
             return json.loads(cleaned, strict=False)
         except (json.JSONDecodeError, ValueError) as e:
             # Fallback for completely malformed JSON missing quotes:
-            # We enforce a clean default dict so the frontend doesn't crash with "undefined"
+            # We enforce a clean default dict covering major downstream endpoints so the frontend avoids "undefined"
             return {
                 "summary": "The AI provided an analysis, but the format was invalid. Please try again or use a shorter transcript.",
+                "explanation": "The AI provided a response, but the format was invalid. Please try highlighting a shorter phrase or trying again.",
                 "key_points": ["Could not parse key points."],
                 "tags": {"subject": "Unknown", "topic": "Unknown", "difficulty": "Unknown"},
-                "related_resources": []
+                "related_resources": [],
+                "topics": [],
+                "questions": [],
+                "keywords": [],
+                "phrases": [],
+                "error": True
             }
     
     async def analyze_image(self, image_base64: str, prompt: str = None) -> dict:

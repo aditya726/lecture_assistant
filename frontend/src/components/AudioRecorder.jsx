@@ -37,10 +37,10 @@ export default function AudioRecorder({ onTranscriptionComplete, onError }) {
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(chunksRef.current, { type: 'audio/wav' });
         setAudioBlob(audioBlob);
-        
+
         // Stop all tracks
         stream.getTracks().forEach(track => track.stop());
-        
+
         // Auto-transcribe
         await transcribeAudio(audioBlob);
       };
@@ -89,7 +89,7 @@ export default function AudioRecorder({ onTranscriptionComplete, onError }) {
       }
 
       const data = await response.json();
-      
+
       if (onTranscriptionComplete) {
         onTranscriptionComplete(data.transcription, data);
       }
@@ -115,7 +115,7 @@ export default function AudioRecorder({ onTranscriptionComplete, onError }) {
         <button
           onClick={startRecording}
           disabled={isProcessing}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-input"
+          className="modern-button flex items-center gap-2 px-5 py-2.5 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm font-semibold"
           title="Start recording"
         >
           <Mic className="w-4 h-4" />
@@ -124,11 +124,11 @@ export default function AudioRecorder({ onTranscriptionComplete, onError }) {
       ) : (
         <button
           onClick={stopRecording}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors animate-pulse border border-input shadow-lg"
+          className="modern-button flex items-center gap-2 px-5 py-2.5 rounded-full bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-all animate-pulse shadow-sm font-semibold"
           title="Stop recording"
         >
           <Square className="w-4 h-4 fill-current" />
-          <span className="text-sm font-semibold">{formatTime(recordingTime)}</span>
+          <span className="text-sm">{formatTime(recordingTime)}</span>
         </button>
       )}
 
