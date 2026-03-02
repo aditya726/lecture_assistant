@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from typing import Optional
 
 class Settings(BaseSettings):
     """
@@ -54,6 +55,10 @@ class Settings(BaseSettings):
     # Google OAuth Credentials (no defaults - must be in .env)
     GOOGLE_CLIENT_ID: str
     GOOGLE_CLIENT_SECRET: str
+    
+    # External API Keys (added for Resource Ingestion)
+    YOUTUBE_API_KEY: Optional[str] = None
+    GOOGLE_BOOKS_API_KEY: Optional[str] = None
     
     class Config:
         env_file = ".env"
