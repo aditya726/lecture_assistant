@@ -18,10 +18,10 @@ def insert_resource(resource: ResourceInDB) -> str:
     return str(result.inserted_id)
 
 def get_all_embeddings() -> List[Dict[str, Any]]:
-    """Retrieve all embeddings and document IDs for FAISS indexing"""
+    """Retrieve all embeddings, chunks, and document IDs for FAISS indexing"""
     collection = get_resources_collection()
-    # Only projection id and embedding to save memory and bandwidth
-    cursor = collection.find({}, {"embedding": 1})
+    # Only projection id, embeddings, and chunks to save memory and bandwidth
+    cursor = collection.find({}, {"embeddings": 1, "chunks": 1})
     return list(cursor)
 
 def get_resources_by_ids(ids: List[str]) -> List[Dict[str, Any]]:

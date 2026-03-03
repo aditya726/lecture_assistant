@@ -42,7 +42,7 @@ async def ingest_resources(request: IngestRequest):
     try:
         result = await ingest_resources_for_query(request.query, request.max_per_source)
         # Rebuild FAISS index to reflect newly inserted resources
-        build_faiss_index()
+        build_faiss_index(force_rebuild=True)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

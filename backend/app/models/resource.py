@@ -13,7 +13,8 @@ class ResourceCreate(ResourceBase):
     pass
 
 class ResourceInDB(ResourceBase):
-    embedding: List[float] = Field(..., description="Vector embedding of the resource content")
+    chunks: List[str] = Field(default=[], description="Text chunks of the resource description")
+    embeddings: List[List[float]] = Field(default=[], description="Vector embeddings for each chunk")
 
 class ResourceResponse(ResourceBase):
     # Same as ResourceBase, excluding the embedding for the API response

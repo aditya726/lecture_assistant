@@ -8,7 +8,7 @@ from app.core.config import settings
 
 from app.models.resource import ResourceInDB
 from app.crud.resource import insert_resource
-from app.services.embedding import generate_resource_embedding
+from app.services.embedding import generate_resource_embeddings
 
 # Setup Youtube client (Requires API key in .env)
 # YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
@@ -38,7 +38,7 @@ def fetch_youtube_videos(query: str, max_results: int = 3) -> List[ResourceInDB]
             video_id = item["id"]["videoId"]
             url = f"https://www.youtube.com/watch?v={video_id}"
             
-            embedding = generate_resource_embedding(title, description, query)
+            chunks, embeddings = generate_resource_embeddings(title, description, query)
             
             res = ResourceInDB(
                 title=title,
@@ -47,7 +47,8 @@ def fetch_youtube_videos(query: str, max_results: int = 3) -> List[ResourceInDB]
                 description=description,
                 difficulty="beginner", # Defaulting to beginner for videos
                 domain=query,
-                embedding=embedding
+                chunks=chunks,
+                embeddings=embeddings
             )
             resources.append(res)
         return resources
@@ -83,7 +84,7 @@ async def fetch_google_books(query: str, max_results: int = 3) -> List[ResourceI
                 description = volume_info.get("description", "No description available")
                 book_url = volume_info.get("infoLink", "")
                 
-                embedding = generate_resource_embedding(title, description, query)
+                chunks, embeddings = generate_resource_embeddings(title, description, query)
                 
                 res = ResourceInDB(
                     title=title,
@@ -92,7 +93,8 @@ async def fetch_google_books(query: str, max_results: int = 3) -> List[ResourceI
                     description=description,
                     difficulty="intermediate",
                     domain=query,
-                    embedding=embedding
+                    chunks=chunks,
+                    embeddings=embeddings
                 )
                 resources.append(res)
         except Exception as e:
@@ -129,7 +131,7 @@ async def fetch_arxiv_papers(query: str, max_results: int = 3) -> List[ResourceI
                 summary = entry.find('atom:summary', namespace).text.strip().replace('\n', ' ')
                 paper_url = entry.find('atom:id', namespace).text
                 
-                embedding = generate_resource_embedding(title, summary, query)
+                chunks, embeddings = generate_resource_embeddings(title, summary, query)
                 
                 res = ResourceInDB(
                     title=title,
@@ -138,7 +140,8 @@ async def fetch_arxiv_papers(query: str, max_results: int = 3) -> List[ResourceI
                     description=summary,
                     difficulty="advanced",
                     domain=query,
-                    embedding=embedding
+                    chunks=chunks,
+                    embeddings=embeddings
                 )
                 resources.append(res)
         except Exception as e:
