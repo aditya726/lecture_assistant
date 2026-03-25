@@ -186,9 +186,49 @@ export default function Home() {
 
       setNotes(combinedNotes);
       setTags(data.tags);
-      setResources(data.related_resources || []);
+      
+      // RAG Retrieval & Fallback Ingestion
+      let finalResources = data.related_resources || [];
+      try {
+        // Build the best search query dynamically from the AI output
+        let optimalQuery = "";
+        if (data.tags && data.tags.topic && data.tags.topic !== "Unknown" && data.tags.topic !== "Concept") {
+           optimalQuery = Array.isArray(data.tags.topic) ? data.tags.topic[0] : data.tags.topic;
+           if (data.tags.subject && data.tags.subject !== "General") {
+             optimalQuery = (Array.isArray(data.tags.subject) ? data.tags.subject[0] : data.tags.subject) + " " + optimalQuery;
+           }
+        } else if (data.related_resources && data.related_resources.length > 0) {
+           optimalQuery = data.related_resources[0];
+        } else if (data.key_points && data.key_points.length > 0) {
+           optimalQuery = data.key_points[0]; 
+        } else if (data.summary) {
+           optimalQuery = data.summary.split('.')[0].trim();
+        } else {
+           optimalQuery = "educational overview"; // Absolute safety net
+        }
 
-      await saveSession(text, combinedNotes, data.tags, data.related_resources || []);
+        let ragRes = await api.post('/recommendations/recommend', { summary: optimalQuery });
+        let recs = ragRes.data?.recommended_resources || [];
+        
+        // Auto-ingest if no resources found matching the query
+        if (recs.length === 0) {
+          await api.post('/recommendations/ingest', { query: optimalQuery, max_per_source: 3 });
+          
+          // Retry fetching recommendations
+          ragRes = await api.post('/recommendations/recommend', { summary: optimalQuery });
+          recs = ragRes.data?.recommended_resources || [];
+        }
+        
+        if (recs.length > 0) {
+          finalResources = recs;
+        }
+      } catch (err) {
+        console.error("RAG pipeline error:", err);
+      }
+
+      setResources(finalResources);
+
+      await saveSession(text, combinedNotes, data.tags, finalResources);
     } catch (err) {
       setError(`Processing Error: ${err.response?.data?.detail || err.message}`);
     } finally {
@@ -434,11 +474,20 @@ export default function Home() {
                   className="flex flex-col gap-3 shrink-0"
                 >
                   {tags && (
-                    <div className="flex flex-wrap gap-2 items-center">
-                      <span className="text-xs font-semibold text-muted-foreground mr-1 uppercase">Tags:</span>
-                      {tags.subject && <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-500 border border-blue-500/20">{Array.isArray(tags.subject) ? tags.subject.join(', ') : tags.subject}</span>}
-                      {tags.topic && <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-500/10 text-purple-500 border border-purple-500/20">{Array.isArray(tags.topic) ? tags.topic.join(', ') : tags.topic}</span>}
-                      {tags.difficulty && <span className="px-3 py-1 rounded-full text-xs font-medium bg-rose-500/10 text-rose-500 border border-rose-500/20">{Array.isArray(tags.difficulty) ? tags.difficulty.join(', ') : tags.difficulty}</span>}
+                    <div className="flex flex-col gap-2">
+                      {(tags.subject || tags.topic) && (
+                        <div className="flex flex-wrap gap-2 items-center">
+                          <span className="text-xs font-semibold text-muted-foreground mr-1 uppercase">Tags:</span>
+                          {tags.subject && <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-500 border border-blue-500/20">{Array.isArray(tags.subject) ? tags.subject.join(', ') : tags.subject}</span>}
+                          {tags.topic && <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-500/10 text-purple-500 border border-purple-500/20">{Array.isArray(tags.topic) ? tags.topic.join(', ') : tags.topic}</span>}
+                        </div>
+                      )}
+                      {tags.difficulty && (
+                        <div className="flex flex-wrap gap-2 items-center">
+                          <span className="text-xs font-semibold text-muted-foreground mr-1 uppercase">Difficulty:</span>
+                          <span className="px-3 py-1 rounded-full text-xs font-medium bg-rose-500/10 text-rose-500 border border-rose-500/20">{Array.isArray(tags.difficulty) ? tags.difficulty.join(', ') : tags.difficulty}</span>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -446,16 +495,35 @@ export default function Home() {
                     <div className="flex flex-wrap gap-2 items-center">
                       <span className="text-xs font-semibold text-muted-foreground mr-1 uppercase">Resources:</span>
                       {resources.map((res, i) => (
-                        <a
-                          key={i}
-                          href={`https://www.youtube.com/results?search_query=${encodeURIComponent(res)}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-card border border-input text-foreground hover:bg-card/80 transition-colors"
-                        >
-                          <ExternalLink className="w-3 h-3" />
-                          {res}
-                        </a>
+                        typeof res === 'string' ? (
+                          <a
+                            key={i}
+                            href={`https://www.youtube.com/results?search_query=${encodeURIComponent(res)}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-card border border-input text-foreground hover:bg-card/80 transition-colors"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            {res}
+                          </a>
+                        ) : (
+                          <a
+                            key={i}
+                            href={res.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-card border border-input text-foreground hover:bg-card/80 transition-colors"
+                            title={res.description || res.title}
+                          >
+                            {res.type === 'video' ? <ExternalLink className="w-3 h-3 text-red-500" /> : <BookOpen className="w-3 h-3 text-blue-500" />}
+                            <span className="truncate max-w-[150px]">{res.title}</span>
+                            {res.difficulty && (
+                              <span className="ml-1 text-[10px] uppercase opacity-70 border-l border-border pl-1.5">
+                                {res.difficulty}
+                              </span>
+                            )}
+                          </a>
+                        )
                       ))}
                     </div>
                   )}
