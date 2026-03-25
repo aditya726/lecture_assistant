@@ -187,8 +187,8 @@ def search_resources(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
         
         seen_mongo_ids = set()
         for idx, score in scored_candidates:
-            # Similarity threshold (e.g., minimum logits score of -2.0 depending on model)
-            if score < -2.0: # lenient threshold based on logits
+            # Similarity threshold: increase strictness to 0.0 to prevent irrelevant matches
+            if score < 0.0:
                 continue
                 
             mongo_id = index_to_mongo_id[idx]

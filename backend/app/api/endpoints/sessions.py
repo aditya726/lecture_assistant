@@ -14,7 +14,7 @@ class SessionCreate(BaseModel):
     summary: Optional[str] = None
     key_points: Optional[List[str]] = []
     tags: Optional[Dict[str, Any]] = {}
-    related_resources: Optional[List[str]] = []
+    related_resources: Optional[List[Any]] = []
 
 class SessionUpdate(BaseModel):
     title: Optional[str] = None
@@ -22,7 +22,7 @@ class SessionUpdate(BaseModel):
     summary: Optional[str] = None
     key_points: Optional[List[str]] = None
     tags: Optional[Dict[str, Any]] = None
-    related_resources: Optional[List[str]] = None
+    related_resources: Optional[List[Any]] = None
 
 @router.post("/")
 async def create_session(session: SessionCreate, current_user: dict = Depends(get_current_user)):
