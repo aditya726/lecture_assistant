@@ -5,10 +5,13 @@ import { Mic, Upload, ExternalLink, HelpCircle, X, Loader2, BookOpen, Tag as Tag
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import AudioRecorder from '../components/AudioRecorder';
 import api from '../services/api';
+import StickyNote from '../components/ui/StickyNote';
 
 export default function Home() {
   const [transcript, setTranscript] = useState('');
   const [notes, setNotes] = useState('');
+  const [summaryText, setSummaryText] = useState('');
+  const [keyPointsList, setKeyPointsList] = useState([]);
   const [tags, setTags] = useState(null);
   const [resources, setResources] = useState([]);
 
@@ -30,12 +33,33 @@ export default function Home() {
 
   const fileInputRef = useRef(null);
 
+  const saveTimeoutRef = useRef(null);
+
   useEffect(() => {
     fetchSessions();
     const handleClickOutside = () => setOpenMenuId(null);
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
+
+  const debouncedSave = (newSummary, newKeyPoints) => {
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+       saveSession(transcript, newSummary, newKeyPoints, tags, resources);
+    }, 1500);
+  };
+
+  const handleSummaryChange = (newVal) => {
+     setSummaryText(newVal);
+     debouncedSave(newVal, keyPointsList);
+  };
+
+  const handleKeyPointChange = (index, newVal) => {
+     const newKp = [...keyPointsList];
+     newKp[index] = newVal;
+     setKeyPointsList(newKp);
+     debouncedSave(summaryText, newKp);
+  };
 
   const fetchSessions = async () => {
     try {
@@ -111,20 +135,22 @@ export default function Home() {
   const loadSession = (session) => {
     setTranscript(session.transcript || '');
     setNotes(session.summary || '');
+    setSummaryText(session.summary || '');
+    setKeyPointsList(session.key_points || []);
     setTags(session.tags || null);
     setResources(session.related_resources || []);
     setCurrentSessionId(session._id);
     setSelectedText('');
   };
 
-  const saveSession = async (transStr, notesStr, tagsObj, resArr) => {
+  const saveSession = async (transStr, sumStr, kpArr, tagsObj, resArr) => {
     try {
       const title = (tagsObj && tagsObj.topic) ? (Array.isArray(tagsObj.topic) ? tagsObj.topic[0] : tagsObj.topic) : (transStr.split(' ').slice(0, 5).join(' ') + '...');
       const payload = {
         title: title || 'Untitled Session',
         transcript: transStr,
-        summary: notesStr,
-        key_points: [],
+        summary: sumStr,
+        key_points: kpArr,
         tags: tagsObj || {},
         related_resources: resArr || []
       };
@@ -179,12 +205,9 @@ export default function Home() {
       const res = await api.post('/ai/process-lecture', { text, context: "" });
       const data = res.data;
 
-      let combinedNotes = `## Summary\n${data.summary}\n\n`;
-      if (data.key_points && data.key_points.length > 0) {
-        combinedNotes += `### Key Points\n` + data.key_points.map(p => `- ${p}`).join('\n');
-      }
-
-      setNotes(combinedNotes);
+      setNotes(data.summary || ''); // For generic Markdown fallback
+      setSummaryText(data.summary || "");
+      setKeyPointsList(data.key_points || []);
       setTags(data.tags);
       
       // RAG Retrieval & Fallback Ingestion
@@ -228,7 +251,7 @@ export default function Home() {
 
       setResources(finalResources);
 
-      await saveSession(text, combinedNotes, data.tags, finalResources);
+      await saveSession(text, data.summary || "", data.key_points || [], data.tags, finalResources);
     } catch (err) {
       setError(`Processing Error: ${err.response?.data?.detail || err.message}`);
     } finally {
@@ -264,6 +287,8 @@ export default function Home() {
   const resetWorkspace = (forceNew = false) => {
     setTranscript('');
     setNotes('');
+    setSummaryText('');
+    setKeyPointsList([]);
     setTags(null);
     setResources([]);
     setSelectedText('');
@@ -559,21 +584,42 @@ export default function Home() {
               </div>
 
               <div
-                className="flex-1 p-6 overflow-y-auto custom-scrollbar text-[15px]"
+                className="flex-1 p-6 overflow-y-auto custom-scrollbar"
                 onMouseUp={handleSelectionChange}
                 onKeyUp={handleSelectionChange}
               >
-                {notes ? (
-                  <div className="prose prose-slate dark:prose-invert max-w-none">
+                {summaryText && (
+                  <div className="mb-6 p-5 rounded-2xl bg-primary/5 border border-primary/20 text-foreground/90 leading-relaxed shadow-sm">
+                    <h3 className="font-bold text-[13px] text-primary uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                       <BookOpen className="w-4 h-4" /> Lecture Summary
+                    </h3>
+                    <p className="text-[15px] whitespace-pre-wrap">{summaryText}</p>
+                  </div>
+                )}
+                
+                {(keyPointsList.length > 0) ? (
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 pb-4 h-full content-start">
+                    {keyPointsList.map((kp, idx) => (
+                       <StickyNote 
+                         key={`note-${idx}`} 
+                         title={`Key Point ${idx + 1}`} 
+                         value={kp} 
+                         onChange={(val) => handleKeyPointChange(idx, val)} 
+                         colorIndex={idx + 1} 
+                       />
+                    ))}
+                  </div>
+                ) : (summaryText ? null : notes ? (
+                  <div className="prose prose-slate dark:prose-invert max-w-none text-[15px]">
                     <MarkdownRenderer content={notes} />
                   </div>
                 ) : (
                   <div className="h-full flex flex-col items-center justify-center text-muted-foreground/60 text-center px-8">
                     <BookOpen className="w-12 h-12 mb-4 opacity-20" />
                     <p className="font-medium text-lg text-foreground/50">No notes yet</p>
-                    <p className="text-sm mt-1">Notes will generate automatically</p>
+                    <p className="text-sm mt-1">Smart Sticky Notes will generate automatically</p>
                   </div>
-                )}
+                ))}
               </div>
             </div>
           </div>
