@@ -24,9 +24,15 @@ export default function Layout({ children }) {
       <nav className="sticky top-0 z-20 backdrop-blur-xl bg-card/70 dark:bg-card/60 border-b border-border">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <Link to="/" className="text-xl font-bold tracking-tight text-foreground hover:text-muted-foreground transition-colors">
-              Tutor Lab
-            </Link>
+            <div className="flex items-center gap-6">
+              <Link to="/" className="text-xl font-bold tracking-tight text-foreground hover:text-muted-foreground transition-colors">
+                Tutor Lab
+              </Link>
+              <div className="hidden md:flex items-center gap-4 border-l border-border/50 pl-6">
+                <Link to="/workspace" className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors">Workspace</Link>
+                <Link to="/notes" className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors">Notes Board</Link>
+              </div>
+            </div>
             <div className="flex items-center gap-4">
               <div className="hidden sm:flex items-center gap-2 text-sm text-foreground">
                 <User className="w-4 h-4" />
