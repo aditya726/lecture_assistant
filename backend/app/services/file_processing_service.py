@@ -2,6 +2,7 @@ import os
 import tempfile
 from typing import Optional, BinaryIO
 from PIL import Image
+from PIL import ImageOps
 import PyPDF2
 from docx import Document
 import base64
@@ -27,6 +28,20 @@ class FileProcessingService:
         """
         try:
             with Image.open(image_path) as img:
+                # Normalize common phone/camera issues before OCR:
+                # - apply EXIF orientation
+                # - convert to RGB
+                # - downscale very large images (faster + often improves OCR)
+                img = ImageOps.exif_transpose(img)
+                if img.mode not in ("RGB", "L"):
+                    img = img.convert("RGB")
+
+                max_dim = max(img.size)
+                if max_dim > 2600:
+                    scale = 2600 / float(max_dim)
+                    new_size = (max(1, int(img.size[0] * scale)), max(1, int(img.size[1] * scale)))
+                    img = img.resize(new_size, Image.LANCZOS)
+
                 # Get image info
                 info = {
                     "format": img.format,
@@ -36,11 +51,22 @@ class FileProcessingService:
                 
                 # Convert to base64 for vision model
                 buffered = io.BytesIO()
-                img.save(buffered, format=img.format if img.format else "PNG")
+                img.save(buffered, format="PNG")
                 img_base64 = base64.b64encode(buffered.getvalue()).decode()
 
                 # Try OCR extraction if available
-                ocr_result = ocr_service.extract_text_from_image(image_path)
+                ocr_input_path = image_path
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_img:
+                    ocr_input_path = tmp_img.name
+                try:
+                    img.save(ocr_input_path, format="PNG")
+                    ocr_result = ocr_service.extract_text_from_image(ocr_input_path)
+                finally:
+                    try:
+                        if ocr_input_path and ocr_input_path != image_path and os.path.exists(ocr_input_path):
+                            os.remove(ocr_input_path)
+                    except Exception:
+                        pass
                 ocr_summary = None
                 if ocr_result.get("success") and ocr_result.get("text"):
                     # Prepare short preview of OCR text
@@ -85,19 +111,83 @@ class FileProcessingService:
             with open(pdf_path, 'rb') as file:
                 pdf_reader = PyPDF2.PdfReader(file)
                 num_pages = len(pdf_reader.pages)
-                
+
                 for page_num in range(num_pages):
                     page = pdf_reader.pages[page_num]
-                    text = page.extract_text()
+                    text = page.extract_text() or ""
                     if text.strip():
                         text_content.append(f"--- Page {page_num + 1} ---\n{text}")
-            
+
             full_text = "\n\n".join(text_content)
+
+            # If it's a scanned/image-only PDF, PyPDF2 returns empty.
+            # Fall back to OCR by converting pages to images.
+            ocr_used = False
+            ocr_pages = []
+            ocr_error = None
+            if not full_text.strip():
+                try:
+                    try:
+                        from pdf2image import convert_from_path  # type: ignore
+                    except Exception as e:
+                        ocr_error = (
+                            "pdf2image is not installed. Install it in the backend venv (pip install pdf2image). "
+                            "On Windows you may also need Poppler in PATH for scanned PDF OCR. "
+                            f"Original error: {e}"
+                        )
+                        return {
+                            "type": "pdf",
+                            "num_pages": num_pages,
+                            "text": "",
+                            "preview": "",
+                            "ocr_used": False,
+                            "ocr_pages": [{"page": 1, "success": False, "error": ocr_error}],
+                            "ocr_error": ocr_error,
+                        }
+
+                    max_ocr_pages = 10
+                    last_page = min(num_pages, max_ocr_pages)
+                    pages = convert_from_path(pdf_path, dpi=150, first_page=1, last_page=last_page)
+
+                    ocr_text_parts = []
+                    for idx, page_image in enumerate(pages):
+                        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp:
+                            tmp_path = tmp.name
+                        try:
+                            page_image.save(tmp_path, format='PNG')
+                            ocr_result = ocr_service.extract_text_from_image(tmp_path)
+                            page_text = (ocr_result or {}).get('text', '').strip()
+                            if page_text:
+                                ocr_used = True
+                                ocr_text_parts.append(f"--- Page {idx + 1} (OCR) ---\n{page_text}")
+                            ocr_pages.append({
+                                "page": idx + 1,
+                                "success": bool((ocr_result or {}).get('success')),
+                                "text_length": len(page_text),
+                                "stage": (ocr_result or {}).get('stage'),
+                                "error": (ocr_result or {}).get('error'),
+                            })
+                        finally:
+                            try:
+                                if os.path.exists(tmp_path):
+                                    os.remove(tmp_path)
+                            except Exception:
+                                pass
+
+                    if ocr_text_parts:
+                        full_text = "\n\n".join(ocr_text_parts)
+                except Exception as e:
+                    ocr_error = str(e)
+                    ocr_pages = [{"page": 1, "success": False, "error": ocr_error}]
+
             return {
                 "type": "pdf",
                 "num_pages": num_pages,
                 "text": full_text,
-                "preview": full_text[:500] + "..." if len(full_text) > 500 else full_text
+                "preview": full_text[:500] + "..." if len(full_text) > 500 else full_text,
+                "ocr_used": ocr_used,
+                "ocr_pages": ocr_pages,
+                "ocr_error": ocr_error,
             }
         except Exception as e:
             raise Exception(f"PDF processing error: {str(e)}")
