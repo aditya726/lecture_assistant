@@ -62,6 +62,12 @@ Be thorough, educational, and solve all problems completely."""
     
     async def summarize_text(self, text: str, context: str = None) -> dict:
         """Summarize the given text"""
+        if not (text or "").strip():
+            return {
+                "summary": "No text provided.",
+                "key_points": []
+            }
+
         prompt = f"""Analyze the following text comprehensively and provide a detailed response:
 
 1. A detailed summary (4-6 sentences) covering all main ideas and important details
@@ -82,7 +88,117 @@ Respond in JSON format:
 }}"""
         
         response = await self.generate_response(prompt)
-        return self._parse_json_response(response)
+        parsed = self._parse_json_response(response)
+
+        # If the model didn't follow JSON format (common with noisy OCR text), retry once
+        # with a stricter prompt that bypasses the extra instruction wrapper.
+        if self._needs_json_retry(parsed, original_text=text):
+            strict_prompt = self._build_strict_summary_prompt(text=text, context=context)
+            try:
+                strict_raw = self.client.generate(model=self.model, prompt=strict_prompt)["response"]
+                strict_parsed = self._parse_json_response(strict_raw)
+                if not self._needs_json_retry(strict_parsed, original_text=text):
+                    return self._normalize_summary_payload(strict_parsed, original_text=text)
+            except Exception:
+                pass
+
+        # Final normalization/fallback (never return empty payload)
+        return self._normalize_summary_payload(parsed, original_text=text)
+
+    def _needs_json_retry(self, parsed: dict, original_text: str) -> bool:
+        try:
+            if not isinstance(parsed, dict):
+                return True
+            if parsed.get("error") is True:
+                return True
+            summary = (parsed.get("summary") or "").strip()
+            key_points = parsed.get("key_points")
+            if not summary:
+                return True
+            if not isinstance(key_points, list) or len(key_points) == 0:
+                # allow empty key_points only when the input is very short
+                if len((original_text or "").strip()) > 40:
+                    return True
+            # Detect the common meta-response when the model claims no input was provided
+            lowered = summary.lower()
+            if ("you have not provided" in lowered or "please provide the text" in lowered) and (original_text or "").strip():
+                return True
+            return False
+        except Exception:
+            return True
+
+    def _build_strict_summary_prompt(self, text: str, context: str = None) -> str:
+        ctx = (context or "").strip()
+        return (
+            "You are a JSON generator. Return ONLY valid JSON, no markdown, no extra keys.\n"
+            "Schema:\n"
+            "{\n"
+            "  \"summary\": string,\n"
+            "  \"key_points\": string[]\n"
+            "}\n\n"
+            "Rules:\n"
+            "- summary: 4-6 sentences\n"
+            "- key_points: 5-8 bullets (strings)\n"
+            "- If the text is empty, return summary='No text provided.' and key_points=[]\n\n"
+            + (f"Context: {ctx}\n\n" if ctx else "")
+            + "<text>\n"
+            + (text or "")
+            + "\n</text>"
+        )
+
+    def _normalize_summary_payload(self, parsed: dict, original_text: str) -> dict:
+        # Ensure required keys exist and contain sensible values.
+        summary = ""
+        key_points = []
+
+        if isinstance(parsed, dict):
+            summary = (parsed.get("summary") or "").strip()
+            kp = parsed.get("key_points")
+            if isinstance(kp, list):
+                key_points = [str(x).strip() for x in kp if str(x).strip()]
+
+        if not summary:
+            summary, key_points = self._simple_fallback_summary(original_text)
+
+        if not key_points and len((original_text or "").strip()) > 40:
+            # Derive key points from text if model didn't provide them
+            _, derived_kp = self._simple_fallback_summary(original_text)
+            key_points = derived_kp
+
+        return {
+            "summary": summary,
+            "key_points": key_points,
+        }
+
+    def _simple_fallback_summary(self, text: str) -> tuple[str, list]:
+        cleaned = (text or "").strip()
+        if not cleaned:
+            return "No text provided.", []
+
+        # Normalize whitespace
+        cleaned = re.sub(r"\s+", " ", cleaned)
+
+        # Sentence-ish split
+        sentences = re.split(r"(?<=[.!?])\s+", cleaned)
+        sentences = [s.strip() for s in sentences if s.strip()]
+
+        summary = " ".join(sentences[:4])
+        if not summary:
+            summary = cleaned[:600] + ("..." if len(cleaned) > 600 else "")
+
+        # Key points: use first lines or sentence fragments
+        key_points = []
+        for s in sentences[:8]:
+            if len(key_points) >= 6:
+                break
+            if len(s) < 8:
+                continue
+            key_points.append(s if len(s) <= 180 else s[:180] + "...")
+
+        if not key_points:
+            key_points = [cleaned[:180] + ("..." if len(cleaned) > 180 else "")]
+
+        return summary, key_points
     
     async def explain_doubt(self, text: str, context: str = None) -> dict:
         """Explain a doubt or concept"""
