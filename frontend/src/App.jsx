@@ -9,6 +9,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import GoogleCallback from './pages/GoogleCallback';
 import LandingPage from './pages/LandingPage';
+import HandwrittenNotes from './pages/HandwrittenNotes';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/workspace" element={<ProtectedRoute><Home /></ProtectedRoute>} />
               <Route path="/notes" element={<ProtectedRoute><Notes /></ProtectedRoute>} />
+              <Route path="/handwritten" element={<ProtectedRoute><HandwrittenNotes /></ProtectedRoute>} />
             </Routes>
           </Layout>
         </AuthProvider>

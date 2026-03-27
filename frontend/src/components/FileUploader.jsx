@@ -1,7 +1,35 @@
 import { useState, useRef } from 'react';
 import { Upload, File, X, Loader2, FileText, Image, Video } from 'lucide-react';
+import api from '../services/api';
 
-export default function FileUploader({ onFileProcessed, onError, acceptedTypes = "all" }) {
+const DEFAULT_TASKS = [
+  {
+    value: 'summarization',
+    label: 'Summarize',
+    className:
+      'px-4 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm border border-input',
+  },
+  {
+    value: 'topic_extraction',
+    label: 'Extract Topics',
+    className:
+      'px-4 py-2 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 text-sm border border-input',
+  },
+  {
+    value: 'keyword_extraction',
+    label: 'Extract Keywords',
+    className:
+      'px-4 py-2 rounded-xl bg-secondary text-secondary-foreground hover:bg-secondary/90 text-sm border border-input',
+  },
+];
+
+export default function FileUploader({
+  onFileProcessed,
+  onError,
+  acceptedTypes = 'all',
+  endpointPath = '/ai/upload-file',
+  tasks = DEFAULT_TASKS,
+}) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -67,26 +95,21 @@ export default function FileUploader({ onFileProcessed, onError, acceptedTypes =
     }
   };
 
-  const uploadFile = async (task = "summarization") => {
+  const uploadFile = async (task = 'summarization') => {
     if (!selectedFile) return;
 
     setIsUploading(true);
     try {
+      const resolvedEndpointPath =
+        typeof endpointPath === 'function' ? endpointPath(selectedFile) : endpointPath;
+
       const formData = new FormData();
       formData.append('file', selectedFile);
       formData.append('task', task);
 
-      const response = await fetch('http://localhost:8000/api/v1/ai/upload-file', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include'
-      });
+      const response = await api.post(resolvedEndpointPath, formData);
 
-      if (!response.ok) {
-        throw new Error('Upload failed');
-      }
-
-      const data = await response.json();
+      const data = response.data;
       
       if (onFileProcessed) {
         onFileProcessed(data);
@@ -99,9 +122,11 @@ export default function FileUploader({ onFileProcessed, onError, acceptedTypes =
       }
     } catch (error) {
       console.error('Upload error:', error);
-      if (onError) {
-        onError('Failed to upload file. Please try again.');
-      }
+      const detail =
+        error?.response?.data?.detail ||
+        error?.response?.data?.message ||
+        error?.message;
+      if (onError) onError(detail ? String(detail) : 'Failed to upload file. Please try again.');
     } finally {
       setIsUploading(false);
     }
@@ -180,25 +205,16 @@ export default function FileUploader({ onFileProcessed, onError, acceptedTypes =
             </div>
 
             {!isUploading ? (
-              <div className="flex gap-2 justify-center">
-                <button
-                  onClick={() => uploadFile('summarization')}
-                  className="px-4 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm border border-input"
-                >
-                  Summarize
-                </button>
-                <button
-                  onClick={() => uploadFile('topic_extraction')}
-                  className="px-4 py-2 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 text-sm border border-input"
-                >
-                  Extract Topics
-                </button>
-                <button
-                  onClick={() => uploadFile('keyword_extraction')}
-                  className="px-4 py-2 rounded-xl bg-secondary text-secondary-foreground hover:bg-secondary/90 text-sm border border-input"
-                >
-                  Extract Keywords
-                </button>
+              <div className="flex gap-2 justify-center flex-wrap">
+                {(tasks || DEFAULT_TASKS).map((t) => (
+                  <button
+                    key={t.value}
+                    onClick={() => uploadFile(t.value)}
+                    className={t.className}
+                  >
+                    {t.label}
+                  </button>
+                ))}
               </div>
             ) : (
               <div className="flex items-center justify-center gap-2 text-foreground dark:text-white/80">

@@ -31,6 +31,7 @@ export default function Layout({ children }) {
               <div className="hidden md:flex items-center gap-4 border-l border-border/50 pl-6">
                 <Link to="/workspace" className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors">Workspace</Link>
                 <Link to="/notes" className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors">Notes Board</Link>
+                <Link to="/handwritten" className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors">Handwritten</Link>
               </div>
             </div>
             <div className="flex items-center gap-4">
