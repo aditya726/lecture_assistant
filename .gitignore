@@ -12,6 +12,7 @@ backend/.env
 # Node
 node_modules/
 dist/
+.env
 .vite/
 *.log
 

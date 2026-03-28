@@ -220,7 +220,7 @@ async def google_callback(code: str, db: Session = Depends(get_db)):
     
     # Redirect to frontend with tokens
     from fastapi.responses import RedirectResponse
-    frontend_url = f"http://localhost:5173/auth/callback?access_token={access_token}&refresh_token={refresh_token}"
+    frontend_url = f"{settings.FRONTEND_ORIGIN}/auth/callback?access_token={access_token}&refresh_token={refresh_token}"
     return RedirectResponse(url=frontend_url)
 
 
