@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Mic, MicOff, Loader2, Square } from 'lucide-react';
+import { API_BASE_URL } from '../config/apiBaseUrl';
 
 export default function AudioRecorder({ onTranscriptionComplete, onError }) {
   const [isRecording, setIsRecording] = useState(false);
@@ -78,7 +79,7 @@ export default function AudioRecorder({ onTranscriptionComplete, onError }) {
       const formData = new FormData();
       formData.append('audio_file', blob, 'recording.wav');
 
-      const response = await fetch('http://localhost:8000/api/v1/ai/transcribe-audio', {
+      const response = await fetch(`${API_BASE_URL}/ai/transcribe-audio`, {
         method: 'POST',
         body: formData,
         credentials: 'include'

@@ -1,7 +1,9 @@
 import axios from 'axios'
 
+import { API_BASE_URL } from '../config/apiBaseUrl'
+
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api/v1',
+  baseURL: API_BASE_URL,
 })
 
 // Add token to requests
@@ -29,7 +31,7 @@ api.interceptors.response.use(
         const refreshToken = localStorage.getItem('refresh_token')
         if (refreshToken) {
           const response = await axios.post(
-            'http://localhost:8000/api/v1/auth/refresh',
+            `${API_BASE_URL}/auth/refresh`,
             null,
             {
               params: { refresh_token: refreshToken }
