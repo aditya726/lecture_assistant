@@ -553,9 +553,11 @@ We also touched on regularization techniques like L1 and L2 to prevent overfitti
               <textarea
                 id="demo-input"
                 className="demo-card__textarea"
-                placeholder="Paste lecture notes, audio transcript, or any educational text here..."
+                placeholder="Click 'Load Sample Text' to try the demo..."
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value.slice(0, charLimit))}
+                onPaste={(e) => e.preventDefault()}
+                readOnly
                 rows={8}
               />
 

@@ -1,4 +1,4 @@
-import whisper
+from faster_whisper import WhisperModel
 import tempfile
 import base64
 import os
@@ -9,6 +9,7 @@ class TranscriptionService:
     def __init__(self):
         # Check if CUDA is available
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.compute_type = "float16" if self.device == "cuda" else "int8"
         # Load Whisper model (base model for balanced speed/accuracy)
         # Options: tiny, base, small, medium, large
         self.model = None
@@ -17,8 +18,8 @@ class TranscriptionService:
     def _load_model(self):
         """Lazy load the model when first needed"""
         if self.model is None:
-            print(f"Loading Whisper {self.model_size} model on {self.device}...")
-            self.model = whisper.load_model(self.model_size, device=self.device)
+            print(f"Loading Faster-Whisper {self.model_size} model on {self.device}...")
+            self.model = WhisperModel(self.model_size, device=self.device, compute_type=self.compute_type)
     
     async def transcribe_audio_file(self, audio_path: str, language: Optional[str] = None) -> dict:
         """
@@ -35,22 +36,26 @@ class TranscriptionService:
         
         try:
             # Transcribe
-            result = self.model.transcribe(
+            segments, info = self.model.transcribe(
                 audio_path,
                 language=language,
-                fp16=False if self.device == "cpu" else True
+                beam_size=5
             )
             
+            # Evaluate the generator to get all segments
+            segments_list = list(segments)
+            full_text = " ".join([seg.text.strip() for seg in segments_list])
+            
             return {
-                "text": result["text"].strip(),
-                "language": result["language"],
+                "text": full_text.strip(),
+                "language": info.language,
                 "segments": [
                     {
-                        "text": seg["text"].strip(),
-                        "start": seg["start"],
-                        "end": seg["end"]
+                        "text": seg.text.strip(),
+                        "start": seg.start,
+                        "end": seg.end
                     }
-                    for seg in result.get("segments", [])
+                    for seg in segments_list
                 ]
             }
         except Exception as e:
