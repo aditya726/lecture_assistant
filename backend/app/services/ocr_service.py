@@ -34,9 +34,9 @@ class OCRService:
             self._ocr = None
             init_errors = []
             for init_variant in (
-                {"use_angle_cls": True, "lang": 'en', "det_db_box_thresh": 0.3, "det_db_thresh": 0.2},
-                {"use_angle_cls": True, "lang": 'en'},
-                {"lang": 'en'},
+                {"use_angle_cls": True, "lang": 'en', "det_db_box_thresh": 0.3, "det_db_thresh": 0.2, "use_mkldnn": False},
+                {"use_angle_cls": True, "lang": 'en', "use_mkldnn": False},
+                {"lang": 'en', "use_mkldnn": False},
             ):
                 try:
                     self._ocr = PaddleOCR(**init_variant)

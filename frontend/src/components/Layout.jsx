@@ -1,71 +1,186 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LogOut, User, Moon, Sun } from 'lucide-react';
+import { LogOut, User, Moon, Sun, BookOpen, ScanLine, LayoutDashboard } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 
 export default function Layout({ children }) {
   const { user, logout, isAuthenticated } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const location = useLocation();
 
-  if (!isAuthenticated) {
+  // Landing page manages its own full-page layout (with its own nav)
+  // so we ALWAYS pass through at "/" — for both auth and unauth users
+  if (!isAuthenticated || location.pathname === '/') {
     return children;
   }
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
-      {/* Subtle decorative blobs, dimmed for readability */}
-      <div className="pointer-events-none absolute inset-0 opacity-30 dark:opacity-20">
-        <div className="absolute -top-24 -left-24 h-80 w-80 rounded-full bg-accent/20 blur-3xl" />
-        <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-primary/20 blur-3xl" />
-        <div className="absolute top-1/3 -right-12 h-64 w-64 rounded-full bg-secondary/20 blur-3xl" />
+      {/* Decorative ambient blobs */}
+      <div className="pointer-events-none absolute inset-0 opacity-20 dark:opacity-15">
+        <div className="absolute -top-24 -left-24 h-80 w-80 rounded-full bg-primary/20 blur-3xl" />
+        <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-violet-500/15 blur-3xl" />
+        <div className="absolute top-1/3 -right-12 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl" />
       </div>
 
-      {/* Glassy navbar */}
-      <nav className="sticky top-0 z-20 backdrop-blur-xl bg-card/70 dark:bg-card/60 border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
+      {/* App Navbar — only for authenticated inner pages */}
+      <nav
+        className="sticky top-0 z-50 backdrop-blur-xl border-b"
+        style={{
+          background: 'rgba(8, 12, 20, 0.88)',
+          borderColor: 'rgba(255,255,255,0.07)',
+        }}
+        role="navigation"
+        aria-label="App navigation"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="flex items-center justify-between h-14">
+
+            {/* Left: Logo + links */}
             <div className="flex items-center gap-6">
-              <Link to="/" className="text-xl font-bold tracking-tight text-foreground hover:text-muted-foreground transition-colors">
-                Tutor Lab
+              <Link
+                to="/"
+                className="flex items-center gap-2 text-white font-semibold text-sm tracking-tight hover:opacity-80 transition-opacity"
+                id="app-nav-logo"
+              >
+                <span
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 8,
+                    background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <BookOpen size={14} color="white" />
+                </span>
+                Lecture Assistant
               </Link>
-              <div className="hidden md:flex items-center gap-4 border-l border-border/50 pl-6">
-                <Link to="/workspace" className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors">Workspace</Link>
-                <Link to="/notes" className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors">Notes Board</Link>
-                <Link to="/handwritten" className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors">Handwritten</Link>
+
+              <div
+                className="hidden md:flex items-center gap-1"
+                style={{ borderLeft: '1px solid rgba(255,255,255,0.08)', paddingLeft: 20 }}
+              >
+                <NavLink to="/workspace" icon={<LayoutDashboard size={14} />} label="Workspace" active={location.pathname === '/workspace'} />
+                <NavLink to="/notes" icon={<BookOpen size={14} />} label="Notes" active={location.pathname === '/notes'} />
+                <NavLink to="/scanner" icon={<ScanLine size={14} />} label="Smart Scanner" active={location.pathname === '/scanner'} />
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="hidden sm:flex items-center gap-2 text-sm text-foreground">
-                <User className="w-4 h-4" />
-                <span className="truncate max-w-[200px]">{user?.email}</span>
+
+            {/* Right: user info + actions */}
+            <div className="flex items-center gap-2">
+              {/* User email */}
+              <div
+                className="hidden sm:flex items-center gap-2 text-xs font-medium"
+                style={{ color: 'rgba(148,163,184,0.8)' }}
+              >
+                <div
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: 'white',
+                    flexShrink: 0,
+                  }}
+                >
+                  {user?.email?.[0]?.toUpperCase() || 'U'}
+                </div>
+                <span className="truncate max-w-[160px]">{user?.email}</span>
               </div>
+
+              {/* Theme toggle */}
               <button
+                id="theme-toggle-btn"
                 onClick={toggleTheme}
-                className="px-3 py-1.5 text-sm rounded-lg flex items-center gap-2 transition-colors border border-input bg-card text-foreground hover:bg-card/80"
-                aria-label="Toggle theme"
-                title={theme === 'dark' ? 'Switch to Light' : 'Switch to Dark'}
+                aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '5px 10px',
+                  borderRadius: 8,
+                  border: '1px solid rgba(255,255,255,0.09)',
+                  background: 'rgba(255,255,255,0.04)',
+                  color: 'rgba(148,163,184,0.85)',
+                  fontSize: 12,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'background 0.2s, color 0.2s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = '#e2e8f0'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'rgba(148,163,184,0.85)'; }}
               >
-                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                {theme === 'dark' ? 'Light' : 'Dark'}
+                {theme === 'dark' ? <Sun size={13} /> : <Moon size={13} />}
+                <span className="hidden sm:inline">{theme === 'dark' ? 'Light' : 'Dark'}</span>
               </button>
+
+              {/* Logout */}
               <button
+                id="logout-btn"
                 onClick={logout}
-                className="px-3 py-1.5 text-sm rounded-lg flex items-center gap-2 transition-colors border border-input bg-destructive/10 text-destructive hover:bg-destructive/20"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '5px 12px',
+                  borderRadius: 8,
+                  border: '1px solid rgba(239,68,68,0.2)',
+                  background: 'rgba(239,68,68,0.08)',
+                  color: '#f87171',
+                  fontSize: 12,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'background 0.2s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.15)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(239,68,68,0.08)'}
               >
-                <LogOut className="w-4 h-4" />
-                Logout
+                <LogOut size={13} />
+                <span>Logout</span>
               </button>
             </div>
           </div>
         </div>
       </nav>
 
-      <main className="relative py-8">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-muted/30 via-transparent to-transparent" />
-        <div className="relative">
-          {children}
-        </div>
+      <main className="relative">
+        {children}
       </main>
     </div>
+  );
+}
+
+/* ── Inner nav link helper ── */
+function NavLink({ to, icon, label, active }) {
+  return (
+    <Link
+      to={to}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+        padding: '5px 12px',
+        borderRadius: 8,
+        fontSize: 13,
+        fontWeight: 500,
+        textDecoration: 'none',
+        transition: 'background 0.15s, color 0.15s',
+        background: active ? 'rgba(99,102,241,0.12)' : 'transparent',
+        color: active ? '#a5b4fc' : 'rgba(148,163,184,0.8)',
+        border: active ? '1px solid rgba(99,102,241,0.2)' : '1px solid transparent',
+      }}
+    >
+      {icon}
+      {label}
+    </Link>
   );
 }

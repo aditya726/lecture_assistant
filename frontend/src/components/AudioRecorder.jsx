@@ -111,32 +111,34 @@ export default function AudioRecorder({ onTranscriptionComplete, onError }) {
   };
 
   return (
-    <div className="flex items-center gap-2 text-foreground dark:text-white">
+    <div className="flex items-center gap-2">
       {!isRecording ? (
         <button
+          id="audio-record-btn"
           onClick={startRecording}
           disabled={isProcessing}
-          className="modern-button flex items-center gap-2 px-5 py-2.5 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm font-semibold"
+          className="ws-toolbar-btn ws-toolbar-btn--record"
           title="Start recording"
         >
-          <Mic className="w-4 h-4" />
-          <span className="text-sm">Record</span>
+          <Mic size={14} />
+          <span>Record</span>
         </button>
       ) : (
         <button
+          id="audio-stop-btn"
           onClick={stopRecording}
-          className="modern-button flex items-center gap-2 px-5 py-2.5 rounded-full bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-all animate-pulse shadow-sm font-semibold"
+          className="ws-toolbar-btn ws-toolbar-btn--recording"
           title="Stop recording"
         >
-          <Square className="w-4 h-4 fill-current" />
-          <span className="text-sm">{formatTime(recordingTime)}</span>
+          <Square size={14} style={{ fill: 'currentColor' }} />
+          <span>{formatTime(recordingTime)}</span>
         </button>
       )}
 
       {isProcessing && (
-        <div className="flex items-center gap-2 text-foreground dark:text-white/80">
-          <Loader2 className="w-4 h-4 animate-spin" />
-          <span className="text-sm">Transcribing...</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.78rem', color: 'rgba(148,163,184,0.8)' }}>
+          <Loader2 size={13} style={{ animation: 'ws-spin 0.75s linear infinite' }} />
+          <span>Transcribing…</span>
         </div>
       )}
     </div>
