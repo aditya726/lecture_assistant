@@ -29,7 +29,7 @@ faiss-cpu==1.7.4; platform_system != "Windows"
 # YouTube Data API client (googleapiclient)
 google-api-python-client==2.118.0
 
-openai-whisper==20231117
+faster-whisper
 torch==2.1.2
 torchaudio==2.1.2
 Pillow==10.2.0
@@ -38,10 +38,7 @@ PyPDF2==3.0.1
 python-docx==1.1.0
 aiofiles==23.2.1
 
-# OCR stack (optional). On Windows + Python 3.11 this may not have compatible wheels.
-# If you need OCR on Windows, using Python 3.10 is often the easiest path.
-paddleocr==2.7.0; python_version < "3.11"
-paddlepaddle==2.6.2; python_version < "3.11"
+rapidocr-onnxruntime
 
 # OpenCV 4.6 is too old for Python 3.11 wheels; bump to a cp311-compatible build.
 opencv-python==4.9.0.80

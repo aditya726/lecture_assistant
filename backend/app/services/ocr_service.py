@@ -12,43 +12,9 @@ class OCRService:
         if self._ocr or self._available:
             return
         try:
-            # Lazy import to avoid mandatory dependency at startup
-            # Also force-disable OneDNN/MKLDNN to avoid CPU backend issues on Windows
-            try:
-                os.environ.setdefault('FLAGS_use_mkldnn', '0')
-                os.environ.setdefault('FLAGS_use_pir_api', '0')
-                os.environ.setdefault('OMP_NUM_THREADS', '1')
-                os.environ.setdefault('MKL_NUM_THREADS', '1')
-                os.environ.setdefault('FLAGS_allocator_strategy', 'naive_best_fit')
-            except Exception:
-                pass
-            from paddleocr import PaddleOCR  # type: ignore
-            # Prefer CPU device explicitly if available
-            try:
-                import paddle  # type: ignore
-                paddle.set_device('cpu')
-            except Exception:
-                pass
+            from rapidocr_onnxruntime import RapidOCR
 
-            # Try full init without unsupported args like 'use_gpu'
-            self._ocr = None
-            init_errors = []
-            for init_variant in (
-                {"use_angle_cls": True, "lang": 'en', "det_db_box_thresh": 0.3, "det_db_thresh": 0.2, "use_mkldnn": False},
-                {"use_angle_cls": True, "lang": 'en', "use_mkldnn": False},
-                {"lang": 'en', "use_mkldnn": False},
-            ):
-                try:
-                    self._ocr = PaddleOCR(**init_variant)
-                    break
-                except TypeError as e:
-                    init_errors.append(str(e))
-                except Exception as e:
-                    init_errors.append(str(e))
-
-            if self._ocr is None:
-                raise Exception("; ".join(init_errors))
-
+            self._ocr = RapidOCR()
             self._available = True
         except Exception as e:
             # Record error and mark unavailable; callers can handle fallback
@@ -64,7 +30,7 @@ class OCRService:
 
     def extract_text_from_image(self, image_path: str) -> Dict[str, Any]:
         """
-        Run OCR on an image file using PaddleOCR.
+        Run OCR on an image file using RapidOCR.
 
         Returns a dict with keys:
         - success: bool
@@ -77,29 +43,24 @@ class OCRService:
             return {"success": False, "text": "", "boxes": [], "error": "Image path does not exist"}
 
         if not self._available or self._ocr is None:
-            return {"success": False, "text": "", "boxes": [], "error": self._init_error or "PaddleOCR not available"}
+            return {"success": False, "text": "", "boxes": [], "error": self._init_error or "RapidOCR not available"}
 
         try:
             import cv2  # type: ignore
             import tempfile
 
             def _run(path: str):
-                # Some PaddleOCR versions don't accept 'cls' in the ocr() call; rely on init setting
-                res = self._ocr.ocr(path)
+                res, _ = self._ocr(path)
                 _boxes = []
                 _lines = []
-                # Normalize result shape for both single-image and batched returns
-                items = res
-                try:
-                    if isinstance(res, list) and len(res) == 1 and isinstance(res[0], list) and res[0] and isinstance(res[0][0], (list, tuple)):
-                        items = res[0]
-                except Exception:
-                    items = res
-                for line in (items or []):
+                
+                for line in (res or []):
                     try:
+                        # RapidOCR output format: [ [[x,y],[x,y],[x,y],[x,y]], "text", 0.9 ]
                         pts = line[0]
-                        txt = line[1][0]
-                        conf = float(line[1][1]) if line[1][1] is not None else 0.0
+                        txt = line[1]
+                        conf = float(line[2]) if len(line) > 2 and line[2] is not None else 0.0
+                        
                         _boxes.append({"points": pts, "text": txt, "confidence": conf})
                         if txt:
                             _lines.append(txt)
