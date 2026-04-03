@@ -257,3 +257,12 @@ async def refresh_token(refresh_token: str, db: Session = Depends(get_db)):
         "refresh_token": new_refresh_token,
         "token_type": "bearer"
     }
+
+
+@router.get("/stats")
+async def get_public_stats(db: Session = Depends(get_db)):
+    """Public endpoint: returns platform stats (user count, etc.)"""
+    user_count = db.query(User).filter(User.is_active == True).count()
+    return {
+        "user_count": user_count,
+    }
