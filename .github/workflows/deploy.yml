@@ -75,6 +75,17 @@ jobs:
             # Setup backend dependencies
             cd backend
             
+            # Self-healing: Install missing host-level OS packages if pip/venv crash
+            sudo apt-get update -y || true
+            sudo apt-get install -y python3.11-venv python3-pip || true
+            
+            # Self-healing: Install Node.js/PM2 on the host if completely missing
+            if ! command -v pm2 &> /dev/null && ! command -v npx &> /dev/null; then
+                curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - || true
+                sudo apt-get install -y nodejs || true
+                sudo npm install -g pm2 || true
+            fi
+            
             # Ensure Python 3.11 is used if available, otherwise fallback to python3
             PYTHON_CMD="python3"
             if command -v python3.11 &> /dev/null; then
@@ -91,5 +102,6 @@ jobs:
             # Ensure the right python executable is targeted explicitly
             $PYTHON_CMD -m pip install -r requirements.txt
             
-            # Restart backend using PM2 (npx/pm2 should now be accessible)
-            pm2 restart all || npx pm2 restart all
+            # Restart backend using PM2 
+            # Note: We name it 'lecture-assistant-backend' automatically if it wasn't running
+            pm2 restart lecture-assistant-backend || pm2 start "uvicorn main:app --host 0.0.0.0 --port 8000" --name lecture-assistant-backend
