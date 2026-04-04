@@ -356,26 +356,29 @@ export default function Home() {
     try {
       const formData = new FormData();
       formData.append('audio_file', file);
-      const res = await api.post('/ai/transcribe-audio', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      const newTranscript = res.data.transcription;
+      const newTranscript = res.data?.transcription || res.data?.text || res.data?.transcript;
+      
+      if (!newTranscript || typeof newTranscript !== 'string') {
+        throw new Error('Server returned an empty or invalid response. This is typically caused by an AWS/Nginx Timeout (504) or an EC2 Out-Of-Memory crash (502) during deployment.');
+      }
+
       setTranscript(newTranscript);
       await processLecture(newTranscript);
     } catch (err) {
-      setError(`Upload Error: ${err.response?.data?.detail || err.message}`);
+      setError(`Upload Failed: ${err.response?.data?.detail || err.message}`);
       setIsProcessing(false);
     }
   };
 
   const handleMicTranscription = async (newText) => {
     if (!currentSessionId) resetWorkspace(true);
+    if (!newText || typeof newText !== 'string' || !newText.trim()) return;
     setTranscript(newText);
     await processLecture(newText);
   };
 
   const processLecture = async (text) => {
-    if (!text.trim()) return;
+    if (!text || typeof text !== 'string' || !text.trim()) return;
     setIsProcessing(true);
     setError(null);
     try {
