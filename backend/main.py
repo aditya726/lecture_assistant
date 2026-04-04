@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import api_router
 from app.core.config import settings
 from app.db.mongodb import verify_connection
+from app.db.postgres import engine, Base
 from app.services.embedding import load_embedding_model
 from app.services.faiss_index import build_faiss_index
 
@@ -29,6 +30,8 @@ app.include_router(api_router, prefix="/api/v1")
 async def startup_event():
     """Verify database connections and load AI models on startup"""
     verify_connection()
+    # Initialize PostgreSQL tables if they don't exist
+    Base.metadata.create_all(bind=engine)
     # Load embedding model
     load_embedding_model()
     # Build FAISS vector DB
