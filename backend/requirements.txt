@@ -42,9 +42,3 @@ rapidocr-onnxruntime
 
 # OpenCV 4.6 is too old for Python 3.11 wheels; bump to a cp311-compatible build.
 opencv-python==4.9.0.80
-scikit-image==0.22.0
-shapely==2.0.2
-pyclipper==1.3.0.post5
-rapidfuzz==3.6.1
-imgaug==0.4.0
-lmdb==1.4.1

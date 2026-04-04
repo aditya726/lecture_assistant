@@ -1,0 +1,73 @@
+name: Deploy Full Stack App
+
+on:
+  push:
+    branches:
+      - main
+      
+jobs:
+  deploy-frontend:
+    name: Deploy Frontend (S3 + CloudFront)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci || npm install
+
+      - name: Build frontend
+        working-directory: ./frontend
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        run: npm run build
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Sync static files with S3
+        working-directory: ./frontend
+        run: aws s3 sync dist/ s3://${{ secrets.S3_BUCKET_NAME }} --delete
+
+      - name: Invalidate CloudFront Cache
+        run: aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
+
+  deploy-backend:
+    name: Deploy Backend (EC2)
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH into EC2 and update backend
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          # The script runs commands consecutively over SSH on your EC2 instance
+          script: |
+            # Navigate to the project root (Update this path if it is different on your EC2 instance)
+            cd ~/lecture_assistant
+            
+            # Pull latest changes from the repository
+            git checkout main
+            git pull origin main
+            
+            # Setup backend dependencies
+            cd backend
+            source .venv/bin/activate
+            # Ensure the right python executable is targeted
+            python -m pip install -r requirements.txt
+            
+            # Restart backend using PM2
+            pm2 restart all
