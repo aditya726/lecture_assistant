@@ -37,7 +37,7 @@ Tutor Lab is a full-stack web app that turns lecture audio (recorded live or upl
   - Whisper-based audio transcription via file upload or base64
 - **File processing**
   - PDF/DOCX/TXT text extraction
-  - Image OCR using PaddleOCR
+  - Image OCR using rapidocr
   - Upload endpoint that optionally runs AI analysis on extracted text
 - **Sessions storage**
   - CRUD for lecture sessions (per-user)
