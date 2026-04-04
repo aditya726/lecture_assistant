@@ -356,6 +356,10 @@ export default function Home() {
     try {
       const formData = new FormData();
       formData.append('audio_file', file);
+      const res = await api.post('/ai/transcribe-audio', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      
       const newTranscript = res.data?.transcription || res.data?.text || res.data?.transcript;
       
       if (!newTranscript || typeof newTranscript !== 'string') {
