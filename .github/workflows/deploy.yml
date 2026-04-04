@@ -56,7 +56,12 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           # The script runs commands consecutively over SSH on your EC2 instance
           script: |
-            # Navigate to the project root (Update this path if it is different on your EC2 instance)
+            # Load environment PATH so pm2 and python3 are recognized
+            source ~/.bashrc || true
+            source ~/.profile || true
+            export PATH=$PATH:/usr/local/bin:/usr/bin
+            
+            # Change this path if your project folder is named differently
             cd ~/lecture_assistant
             
             # Pull latest changes from the repository
@@ -66,8 +71,8 @@ jobs:
             # Setup backend dependencies
             cd backend
             source .venv/bin/activate
-            # Ensure the right python executable is targeted
-            python -m pip install -r requirements.txt
+            # Ensure the right python executable is targeted explicitly
+            python3.11 -m pip install -r requirements.txt
             
-            # Restart backend using PM2
-            pm2 restart all
+            # Restart backend using PM2 (npx handles path resolution)
+            npx pm2 restart all
