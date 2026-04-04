@@ -50,10 +50,13 @@ jobs:
     steps:
       - name: SSH into EC2 and update backend
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          BACKEND_ENV_FILE: ${{ secrets.BACKEND_ENV_FILE }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: BACKEND_ENV_FILE
           # The script runs commands consecutively over SSH on your EC2 instance
           script: |
             # Load environment PATH so pm2, python3.11, and NVM are recognized
@@ -74,6 +77,11 @@ jobs:
             
             # Setup backend dependencies
             cd backend
+            
+            # Dynamically securely write the .env file from GitHub Secrets
+            if [ -n "$BACKEND_ENV_FILE" ]; then
+                echo "$BACKEND_ENV_FILE" > .env
+            fi
             
             # Self-healing: Install missing host-level OS packages if pip/venv crash
             sudo apt-get update -y || true
