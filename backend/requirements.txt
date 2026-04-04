@@ -9,7 +9,7 @@ ollama==0.1.6
 python-multipart==0.0.6
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
-httpx==0.26.0
+httpx==0.25.2
 pydantic[email]==2.5.3
 
 # Crypto used directly in app/core/security.py (passlib extra usually pulls it in, but keep explicit)
