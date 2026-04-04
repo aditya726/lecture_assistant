@@ -252,7 +252,54 @@ Respond ONLY with valid, perfectly formatted JSON. No other text, no markdown bl
     "related_resources": ["resource 1", "resource 2", "resource 3"]
 }}"""
         response = await self.generate_response(prompt)
-        return self._parse_json_response(response)
+        parsed = self._parse_json_response(response)
+        
+        # If parsing fails, use regex immediately to avoid slow LLM retry delays
+        if parsed.get("error"):
+            raw = parsed.get("summary", "") # _parse_json_response sticks raw output into summary on error
+            
+            # Robust regex fallbacks
+            summary = ""
+            summary_match = re.search(r'"summary"\s*:\s*"((?:[^"\\]|\\.)*)"', raw, re.DOTALL)
+            if summary_match:
+                summary = summary_match.group(1).replace('\\n', '\n').replace('\\"', '"')
+            else:
+                # If even regex fails, fallback to first 600 chars
+                summary = raw[:600] + ("..." if len(raw) > 600 else "")
+                
+            # Extract key_points
+            key_points = []
+            kp_match = re.search(r'"key_points"\s*:\s*\[(.*?)\]', raw, re.DOTALL)
+            if kp_match:
+                kp_raw = kp_match.group(1)
+                # Find all string items in the array (handling escaped quotes)
+                key_points = [m.group(1).replace('\\"', '"') for m in re.finditer(r'"((?:[^"\\]|\\.)*)"', kp_raw)]
+                
+            # Extract tags (subject, topic, difficulty)
+            tags = {"subject": "General", "topic": "Concept", "difficulty": "Unknown"}
+            tags_match = re.search(r'"tags"\s*:\s*\{(.*?)\}', raw, re.DOTALL)
+            if tags_match:
+                tags_raw = tags_match.group(1)
+                for tag_field in ["subject", "topic", "difficulty"]:
+                    field_match = re.search(fr'"{tag_field}"\s*:\s*"((?:[^"\\]|\\.)*)"', tags_raw)
+                    if field_match:
+                        tags[tag_field] = field_match.group(1).replace('\\"', '"')
+                        
+            # Extract related_resources
+            related_resources = []
+            rr_match = re.search(r'"related_resources"\s*:\s*\[(.*?)\]', raw, re.DOTALL)
+            if rr_match:
+                rr_raw = rr_match.group(1)
+                related_resources = [m.group(1).replace('\\"', '"') for m in re.finditer(r'"((?:[^"\\]|\\.)*)"', rr_raw)]
+
+            return {
+                "summary": summary,
+                "key_points": key_points,
+                "tags": tags,
+                "related_resources": related_resources
+            }
+
+        return parsed
 
     async def extract_topics(self, text: str) -> dict:
         """Extract main topics and subtopics from text"""
@@ -345,6 +392,8 @@ Respond in JSON format:
                 # Fix common JSON issues keeping newlines safe
                 json_str = re.sub(r',\s*}', '}', json_str)  # Remove trailing commas
                 json_str = re.sub(r',\s*]', ']', json_str)  # Remove trailing commas in arrays
+                # Fix double-escaped or poorly escaped quotes
+                json_str = json_str.replace('\\"\\"', '\\"')
                 # Replace unescaped newlines inside strings, or just use strict=False
                 return json.loads(json_str, strict=False)
             
