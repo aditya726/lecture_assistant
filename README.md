@@ -71,15 +71,15 @@ Tutor Lab is a full-stack web app that turns lecture audio (recorded live or upl
 - **Pydantic v2** + `pydantic-settings` for configuration
 - **PostgreSQL** + **SQLAlchemy** for user accounts
 - **MongoDB (PyMongo)** for sessions, notes, and resource storage
-- **Ollama** for LLM generation (defaults to `llama3:8b`)
-- **Whisper** (`openai-whisper`) for speech-to-text
+- **Ollama** for LLM generation (defaults to `llama3.2:3b`)
+- **Whisper** (`faster-whisper`) for speech-to-text
 - **Retrieval / RAG components**
   - `sentence-transformers` (embeddings + cross-encoder)
   - FAISS (vector search)
   - `rank-bm25` (lexical search)
   - `numpy`
 - **OCR / document processing**
-  - `paddleocr` + `paddlepaddle`
+  - `rapidocr-onnxruntime`
   - `Pillow`, `opencv-python`, `PyPDF2`, `pdf2image`, `python-docx`
 
 ## Repository layout
@@ -95,7 +95,7 @@ Tutor Lab is a full-stack web app that turns lecture audio (recorded live or upl
 - **PostgreSQL** (for users)
 - **MongoDB** (for sessions/resources)
 - **Ollama** running locally (or reachable) and the configured model pulled
-  - Example: `ollama pull llama3:8b`
+  - Example: `ollama pull llama3.2:3b`
 
 ### 1) Backend setup
 
@@ -126,7 +126,7 @@ MONGODB_DB=texts_db
 
 # Ollama
 OLLAMA_HOST=http://localhost:11434
-OLLAMA_MODEL=llama3:8b
+OLLAMA_MODEL=llama3.2:3b
 
 # Auth / CORS
 SECRET_KEY=change-me
