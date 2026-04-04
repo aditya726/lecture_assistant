@@ -56,10 +56,14 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           # The script runs commands consecutively over SSH on your EC2 instance
           script: |
-            # Load environment PATH so pm2 and python3 are recognized
+            # Load environment PATH so pm2, python3.11, and NVM are recognized
             source ~/.bashrc || true
             source ~/.profile || true
             export PATH=$PATH:/usr/local/bin:/usr/bin
+            
+            # If Node/PM2 was installed via NVM, load it:
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             
             # Change this path if your project folder is named differently
             cd ~/lecture_assistant
@@ -70,9 +74,22 @@ jobs:
             
             # Setup backend dependencies
             cd backend
+            
+            # Ensure Python 3.11 is used if available, otherwise fallback to python3
+            PYTHON_CMD="python3"
+            if command -v python3.11 &> /dev/null; then
+                PYTHON_CMD="python3.11"
+            fi
+            
+            # Create virtual environment if it doesn't exist yet
+            if [ ! -d ".venv" ]; then
+                $PYTHON_CMD -m venv .venv
+            fi
+            
+            # Activate and install
             source .venv/bin/activate
             # Ensure the right python executable is targeted explicitly
-            python3.11 -m pip install -r requirements.txt
+            $PYTHON_CMD -m pip install -r requirements.txt
             
-            # Restart backend using PM2 (npx handles path resolution)
-            npx pm2 restart all
+            # Restart backend using PM2 (npx/pm2 should now be accessible)
+            pm2 restart all || npx pm2 restart all
