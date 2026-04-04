@@ -25,8 +25,7 @@ class Settings(BaseSettings):
     # Ollama Model Selection (non-sensitive default)
     OLLAMA_MODEL: str = "llama3.2:3b"
     
-    # Google OAuth Redirect (constructed from environment)
-    GOOGLE_REDIRECT_URI: str = "http://localhost:8000/api/v1/auth/google/callback"
+    # Remove hardcoded GOOGLE_REDIRECT_URI from here
     
     # ============================================
     # SENSITIVE CONFIGURATION (Must be in .env)
@@ -55,6 +54,7 @@ class Settings(BaseSettings):
     # Google OAuth Credentials (no defaults - must be in .env)
     GOOGLE_CLIENT_ID: str
     GOOGLE_CLIENT_SECRET: str
+    GOOGLE_REDIRECT_URI: str
     
     # External API Keys (added for Resource Ingestion)
     YOUTUBE_API_KEY: Optional[str] = None
