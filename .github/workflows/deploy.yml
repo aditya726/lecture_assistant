@@ -118,10 +118,10 @@ jobs:
             UVICORN_ARGS="--host 0.0.0.0 --port 8000"
             if sudo test -f "${CERT_PATH}/fullchain.pem"; then
                 echo "SSL certificates found for ${DOMAIN}. Enabling HTTPS on Uvicorn."
-                sudo cp "${CERT_PATH}/fullchain.pem" ~/fullchain.pem
-                sudo cp "${CERT_PATH}/privkey.pem" ~/privkey.pem
-                sudo chown $USER:$USER ~/*.pem
-                UVICORN_ARGS="${UVICORN_ARGS} --ssl-keyfile ~/privkey.pem --ssl-certfile ~/fullchain.pem"
+                sudo cp "${CERT_PATH}/fullchain.pem" "$HOME/fullchain.pem"
+                sudo cp "${CERT_PATH}/privkey.pem" "$HOME/privkey.pem"
+                sudo chown $(whoami):$(whoami) "$HOME"/*.pem
+                UVICORN_ARGS="${UVICORN_ARGS} --ssl-keyfile $HOME/privkey.pem --ssl-certfile $HOME/fullchain.pem"
             fi
             
             # Restart backend using PM2 
