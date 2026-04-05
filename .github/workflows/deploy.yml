@@ -110,6 +110,20 @@ jobs:
             # Ensure the right python executable is targeted explicitly
             $PYTHON_CMD -m pip install -r requirements.txt
             
+            # Automatically handle nip.io SSL without Nginx
+            EC2_IP=$(curl -s checkip.amazonaws.com)
+            DOMAIN="${EC2_IP}.nip.io"
+            CERT_PATH="/etc/letsencrypt/live/${DOMAIN}"
+            
+            UVICORN_ARGS="--host 0.0.0.0 --port 8000"
+            if sudo test -f "${CERT_PATH}/fullchain.pem"; then
+                echo "SSL certificates found for ${DOMAIN}. Enabling HTTPS on Uvicorn."
+                sudo cp "${CERT_PATH}/fullchain.pem" ~/fullchain.pem
+                sudo cp "${CERT_PATH}/privkey.pem" ~/privkey.pem
+                sudo chown $USER:$USER ~/*.pem
+                UVICORN_ARGS="${UVICORN_ARGS} --ssl-keyfile ~/privkey.pem --ssl-certfile ~/fullchain.pem"
+            fi
+            
             # Restart backend using PM2 
-            # Note: We name it 'lecture-assistant-backend' automatically if it wasn't running
-            npx pm2 restart lecture-assistant-backend || npx pm2 start .venv/bin/python3.11 --name lecture-assistant-backend -- -m uvicorn main:app --host 0.0.0.0 --port 8000
+            npx pm2 delete lecture-assistant-backend || true
+            npx pm2 start .venv/bin/python3.11 --name lecture-assistant-backend -- -m uvicorn main:app $UVICORN_ARGS
