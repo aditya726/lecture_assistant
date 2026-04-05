@@ -26,9 +26,10 @@ Instructions:
 
 Provide a thorough, educational response:"""
             
-            response = self.client.generate(
-                model=self.model,
-                prompt=enhanced_prompt
+            import asyncio
+            import functools
+            response = await asyncio.to_thread(
+                functools.partial(self.client.generate, model=self.model, prompt=enhanced_prompt)
             )
             return response['response']
         except Exception as e:
@@ -52,9 +53,10 @@ Be thorough, educational, and solve all problems completely."""
             }]
             enhanced_messages.extend(messages)
             
-            response = self.client.chat(
-                model=self.model,
-                messages=enhanced_messages
+            import asyncio
+            import functools
+            response = await asyncio.to_thread(
+                functools.partial(self.client.chat, model=self.model, messages=enhanced_messages)
             )
             return response['message']['content']
         except Exception as e:
@@ -95,7 +97,12 @@ Respond in JSON format:
         if self._needs_json_retry(parsed, original_text=text):
             strict_prompt = self._build_strict_summary_prompt(text=text, context=context)
             try:
-                strict_raw = self.client.generate(model=self.model, prompt=strict_prompt)["response"]
+                import asyncio
+                import functools
+                strict_resp = await asyncio.to_thread(
+                    functools.partial(self.client.generate, model=self.model, prompt=strict_prompt)
+                )
+                strict_raw = strict_resp["response"]
                 strict_parsed = self._parse_json_response(strict_raw)
                 if not self._needs_json_retry(strict_parsed, original_text=text):
                     return self._normalize_summary_payload(strict_parsed, original_text=text)
@@ -448,10 +455,10 @@ Be extremely thorough and descriptive in your analysis. Include every detail you
             
             # Try to use vision model if available (llava, bakllava, etc.)
             try:
-                response = self.client.generate(
-                    model="llava",  # Vision model
-                    prompt=analysis_prompt,
-                    images=[image_base64]
+                import asyncio
+                import functools
+                response = await asyncio.to_thread(
+                    functools.partial(self.client.generate, model="llava", prompt=analysis_prompt, images=[image_base64])
                 )
                 return {
                     "description": response['response'],

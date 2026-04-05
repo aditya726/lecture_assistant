@@ -333,8 +333,9 @@ async def ocr_analyze_image(
             temp_path = temp_file.name
 
         try:
-            # Run OCR directly
-            ocr_result = ocr_service.extract_text_from_image(temp_path)
+            import asyncio
+            # Run OCR directly in background thread to prevent GUI freezing
+            ocr_result = await asyncio.to_thread(ocr_service.extract_text_from_image, temp_path)
             ocr_text = (ocr_result or {}).get("text", "").strip()
             if not ocr_text:
                 # Provide helpful diagnostics

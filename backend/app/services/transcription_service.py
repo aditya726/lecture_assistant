@@ -21,6 +21,32 @@ class TranscriptionService:
             print(f"Loading Faster-Whisper {self.model_size} model on {self.device}...")
             self.model = WhisperModel(self.model_size, device=self.device, compute_type=self.compute_type)
     
+    def _sync_transcribe(self, audio_path: str, language: Optional[str] = None) -> dict:
+        self._load_model()
+        # Transcribe
+        segments, info = self.model.transcribe(
+            audio_path,
+            language=language,
+            beam_size=5
+        )
+        
+        # Evaluate the generator to get all segments
+        segments_list = list(segments)
+        full_text = " ".join([seg.text.strip() for seg in segments_list])
+        
+        return {
+            "text": full_text.strip(),
+            "language": info.language,
+            "segments": [
+                {
+                    "text": seg.text.strip(),
+                    "start": seg.start,
+                    "end": seg.end
+                }
+                for seg in segments_list
+            ]
+        }
+
     async def transcribe_audio_file(self, audio_path: str, language: Optional[str] = None) -> dict:
         """
         Transcribe audio file to text
@@ -32,32 +58,9 @@ class TranscriptionService:
         Returns:
             dict with 'text', 'language', and 'segments' keys
         """
-        self._load_model()
-        
+        import asyncio
         try:
-            # Transcribe
-            segments, info = self.model.transcribe(
-                audio_path,
-                language=language,
-                beam_size=5
-            )
-            
-            # Evaluate the generator to get all segments
-            segments_list = list(segments)
-            full_text = " ".join([seg.text.strip() for seg in segments_list])
-            
-            return {
-                "text": full_text.strip(),
-                "language": info.language,
-                "segments": [
-                    {
-                        "text": seg.text.strip(),
-                        "start": seg.start,
-                        "end": seg.end
-                    }
-                    for seg in segments_list
-                ]
-            }
+            return await asyncio.to_thread(self._sync_transcribe, audio_path, language)
         except Exception as e:
             raise Exception(f"Transcription error: {str(e)}")
     
