@@ -16,15 +16,9 @@ class FileProcessingService:
         self.supported_document_formats = {'.pdf', '.docx', '.txt'}
         self.max_file_size = 50 * 1024 * 1024  # 50 MB
     
-    async def process_image(self, image_path: str) -> dict:
+    def _sync_process_image(self, image_path: str) -> dict:
         """
         Process image file - extract text using OCR if available, and prepare for vision model
-        
-        Args:
-            image_path: Path to image file
-        
-        Returns:
-            dict with image info and base64 encoded image
         """
         try:
             with Image.open(image_path) as img:
@@ -95,16 +89,14 @@ class FileProcessingService:
                 }
         except Exception as e:
             raise Exception(f"Image processing error: {str(e)}")
+
+    async def process_image(self, image_path: str) -> dict:
+        import asyncio
+        return await asyncio.to_thread(self._sync_process_image, image_path)
     
-    async def process_pdf(self, pdf_path: str) -> dict:
+    def _sync_process_pdf(self, pdf_path: str) -> dict:
         """
         Extract text from PDF file
-        
-        Args:
-            pdf_path: Path to PDF file
-        
-        Returns:
-            dict with extracted text
         """
         try:
             text_content = []
@@ -191,16 +183,14 @@ class FileProcessingService:
             }
         except Exception as e:
             raise Exception(f"PDF processing error: {str(e)}")
+
+    async def process_pdf(self, pdf_path: str) -> dict:
+        import asyncio
+        return await asyncio.to_thread(self._sync_process_pdf, pdf_path)
     
-    async def process_docx(self, docx_path: str) -> dict:
+    def _sync_process_docx(self, docx_path: str) -> dict:
         """
         Extract text from DOCX file
-        
-        Args:
-            docx_path: Path to DOCX file
-        
-        Returns:
-            dict with extracted text
         """
         try:
             doc = Document(docx_path)
@@ -215,17 +205,12 @@ class FileProcessingService:
             }
         except Exception as e:
             raise Exception(f"DOCX processing error: {str(e)}")
+
+    async def process_docx(self, docx_path: str) -> dict:
+        import asyncio
+        return await asyncio.to_thread(self._sync_process_docx, docx_path)
     
-    async def process_text_file(self, text_path: str) -> dict:
-        """
-        Read text file
-        
-        Args:
-            text_path: Path to text file
-        
-        Returns:
-            dict with text content
-        """
+    def _sync_process_text_file(self, text_path: str) -> dict:
         try:
             with open(text_path, 'r', encoding='utf-8') as file:
                 text = file.read()
@@ -236,7 +221,6 @@ class FileProcessingService:
                 "preview": text[:500] + "..." if len(text) > 500 else text
             }
         except UnicodeDecodeError:
-            # Try with different encoding
             try:
                 with open(text_path, 'r', encoding='latin-1') as file:
                     text = file.read()
@@ -249,6 +233,10 @@ class FileProcessingService:
                 raise Exception(f"Text file processing error: {str(e)}")
         except Exception as e:
             raise Exception(f"Text file processing error: {str(e)}")
+
+    async def process_text_file(self, text_path: str) -> dict:
+        import asyncio
+        return await asyncio.to_thread(self._sync_process_text_file, text_path)
     
     async def process_video(self, video_path: str) -> dict:
         """
