@@ -1,25 +1,20 @@
 import React from 'react';
 import { Maximize2, Sparkles } from 'lucide-react';
-import { motion } from 'framer-motion';
 
-// Premium dark gradients instead of pastel post-it colors
 const colors = [
-  'from-blue-500/10 to-blue-500/5 border-blue-500/20 text-blue-100 accent-blue-500', 
-  'from-purple-500/10 to-purple-500/5 border-purple-500/20 text-purple-100 accent-purple-500',
-  'from-emerald-500/10 to-emerald-500/5 border-emerald-500/20 text-emerald-100 accent-emerald-500',
-  'from-pink-500/10 to-pink-500/5 border-pink-500/20 text-pink-100 accent-pink-500',
-  'from-orange-500/10 to-orange-500/5 border-orange-500/20 text-orange-100 accent-orange-500'
+  { border: 'border-[#d97757]/25', text: 'text-[#f0b39e]', line: 'bg-[#d97757]/35' },
+  { border: 'border-[#7ea389]/25', text: 'text-[#b9d0be]', line: 'bg-[#7ea389]/35' },
+  { border: 'border-[#b89b67]/25', text: 'text-[#dfc8a1]', line: 'bg-[#b89b67]/35' },
+  { border: 'border-[#9d8fb5]/25', text: 'text-[#cabfd8]', line: 'bg-[#9d8fb5]/35' },
+  { border: 'border-[#b77a74]/25', text: 'text-[#dfb1ad]', line: 'bg-[#b77a74]/35' },
 ];
 
 export default function StickyNote({ title, value, onChange, colorIndex = 0, onExpand }) {
   const colorClass = colors[colorIndex % colors.length];
 
   return (
-    <div className="p-[1px] rounded-[24px] h-full relative group transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/50">
-       {/* Background gradient border effect */}
-       <div className={`absolute inset-0 rounded-[24px] bg-gradient-to-br ${colorClass.split(' ').slice(0, 2).join(' ')} opacity-50 blur-sm group-hover:opacity-100 transition-opacity`} />
-       
-       <div className={`relative flex flex-col p-6 rounded-[23px] bg-[#0d121c]/90 backdrop-blur-xl border ${colorClass} h-full min-h-[180px]`}>
+    <div className="p-[1px] rounded-[24px] h-full relative group transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/40">
+       <div className={`relative flex flex-col p-6 rounded-[23px] bg-[#181b21]/90 backdrop-blur-xl border ${colorClass.border} h-full min-h-[180px]`}>
           
           {/* Maximize Button */}
           {onExpand && (
@@ -33,11 +28,11 @@ export default function StickyNote({ title, value, onChange, colorIndex = 0, onE
           )}
 
           {/* Visual Pin Replacement (Glowing Dot) */}
-          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+           <div className={`absolute top-0 inset-x-0 h-px ${colorClass.line}`} />
           
           <div className="flex items-center gap-2 mb-4 mt-1 border-b border-white/10 pb-3">
-             <Sparkles className={`w-4 h-4 opacity-70 ${colorClass.split(' ').find(c => c.startsWith('text-'))}`} />
-             <h3 className={`font-bold text-[13px] opacity-90 tracking-wider uppercase font-sans ${colorClass.split(' ').find(c => c.startsWith('text-'))}`}>{title}</h3>
+             <Sparkles className={`w-4 h-4 opacity-70 ${colorClass.text}`} />
+             <h3 className={`font-bold text-[13px] opacity-90 tracking-wider uppercase font-sans ${colorClass.text}`}>{title}</h3>
           </div>
           
           <textarea 

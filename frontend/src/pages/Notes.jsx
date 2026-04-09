@@ -32,7 +32,7 @@ export default function Notes() {
         const sessionDate = new Date(session.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
         if (session.key_points && session.key_points.length > 0) {
-           const combinedKp = session.key_points.map(kp => `• ${kp}`).join('\n\n');
+           const combinedKp = session.key_points.map(kp => `- ${kp}`).join('\n\n');
            extractedNotes.push({
               id: `kp-${session._id}`,
               sessionId: session._id,
@@ -91,7 +91,7 @@ export default function Notes() {
         } else {
            note.sessionObj.key_points = newContent
               .split('\n')
-              .map(line => line.replace(/^•\s*/, '').trim())
+              .map(line => line.replace(/^[\-•]\s*/, '').trim())
               .filter(line => line.length > 0);
         }
 
@@ -105,7 +105,7 @@ export default function Notes() {
     return (
       <div className="workspace-layout flex h-[calc(100vh-56px)] items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 animate-spin text-primary opacity-80" />
+          <Loader2 className="w-10 h-10 animate-spin text-[#d97757] opacity-80" />
           <p className="text-sm font-medium text-muted-foreground animate-pulse">Loading notes...</p>
         </div>
       </div>
@@ -123,8 +123,8 @@ export default function Notes() {
           className="mb-8 shrink-0"
         >
           <h1 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-3">
-             <div className="bg-primary/10 p-2.5 rounded-xl border border-primary/20">
-                <Layers className="w-7 h-7 text-primary" /> 
+             <div className="bg-[#d97757]/12 p-2.5 rounded-xl border border-[#d97757]/28">
+               <Layers className="w-7 h-7 text-[#f0b39e]" /> 
              </div>
              Knowledge Board
           </h1>
@@ -200,17 +200,17 @@ export default function Notes() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 10 }}
                 transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                className="w-full max-w-4xl h-[85vh] bg-[#0a0f18] rounded-[32px] shadow-2xl flex flex-col overflow-hidden border border-white/10 relative"
+                className="w-full max-w-4xl h-[85vh] bg-[#181b21] rounded-[32px] shadow-2xl flex flex-col overflow-hidden border border-white/10 relative"
               >
                 {/* Decorative glow inside modal */}
-                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
+                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#d97757]/10 rounded-full blur-[100px] pointer-events-none" />
 
                 <div className="flex items-center justify-between p-6 border-b border-white/5 bg-white/[0.02] relative z-10">
                    <div className="flex items-center gap-3">
-                     <div className="bg-primary/20 p-2 rounded-xl">
-                       <Sparkles className="w-5 h-5 text-primary" />
+                     <div className="bg-[#d97757]/20 p-2 rounded-xl">
+                       <Sparkles className="w-5 h-5 text-[#f0b39e]" />
                      </div>
-                     <h2 className="font-bold text-lg text-white tracking-wide">{expandedNote.title}</h2>
+                     <h2 className="font-bold text-lg text-[#f4f1ed] tracking-wide">{expandedNote.title}</h2>
                    </div>
                    <button 
                      onClick={() => setExpandedNote(null)} 
@@ -228,7 +228,7 @@ export default function Notes() {
                        setExpandedNote(prev => ({...prev, content: val}));
                        handleNoteChange(expandedNote.id, val);
                     }}
-                    className="w-full h-full bg-transparent border-none outline-none resize-none custom-scrollbar text-[18px] leading-[1.8] font-medium placeholder:text-white/20 text-[rgba(240,244,255,0.9)]"
+                    className="w-full h-full bg-transparent border-none outline-none resize-none custom-scrollbar text-[18px] leading-[1.8] font-medium placeholder:text-white/20 text-[#ece3dc]/90"
                     spellCheck="false"
                     placeholder="Empty note..."
                   />

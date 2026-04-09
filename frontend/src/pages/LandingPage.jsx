@@ -83,7 +83,7 @@ function Navbar({ user }) {
           zIndex: 200,
           transition: 'background 0.3s ease, box-shadow 0.3s ease, padding 0.3s ease',
           padding: scrolled ? '10px 0' : '18px 0',
-          background: scrolled ? 'rgba(8, 12, 20, 0.92)' : 'transparent',
+          background: scrolled ? 'rgba(17, 19, 21, 0.92)' : 'transparent',
           backdropFilter: scrolled ? 'blur(20px) saturate(180%)' : 'none',
           WebkitBackdropFilter: scrolled ? 'blur(20px) saturate(180%)' : 'none',
           boxShadow: scrolled
@@ -96,9 +96,9 @@ function Navbar({ user }) {
           <Link to="/" id="nav-logo" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', flexShrink: 0 }}>
             <span style={{
               width: 36, height: 36, borderRadius: 10,
-              background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+              background: '#d97757',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 4px 16px rgba(99,102,241,0.4)', flexShrink: 0,
+              boxShadow: '0 4px 16px rgba(217,119,87,0.35)', flexShrink: 0,
             }}>
               <Sparkles size={17} color="white" />
             </span>
@@ -156,7 +156,7 @@ function Navbar({ user }) {
           transition={{ duration: 0.18 }}
           style={{
             position: 'fixed', top: 64, left: 0, right: 0, zIndex: 199,
-            background: 'rgba(8, 12, 20, 0.98)',
+            background: 'rgba(17, 19, 21, 0.98)',
             borderBottom: '1px solid rgba(255,255,255,0.08)',
             backdropFilter: 'blur(20px)',
             padding: '16px 24px 20px',
@@ -271,8 +271,8 @@ function HeroSection({ user, userCount }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
         >
-          Transform Your Lectures
-          <span className="hero__title-gradient"> into Smart Notes</span>
+          <span className="hero__title-robotic">Transform Your Lectures</span>
+          <span className="hero__title-handwritten">into Smart Notes</span>
         </motion.h1>
 
         {/* Subtitle */}
@@ -352,8 +352,7 @@ const features = [
     title: 'Real-Time Transcription',
     description:
       'Record live audio or upload files — our AI converts speech to text with 98%+ accuracy, supporting 40+ languages.',
-    color: '#3b82f6',
-    gradient: 'linear-gradient(135deg, rgba(59,130,246,0.15), rgba(99,102,241,0.05))',
+    color: '#d97757',
   },
   {
     id: 'feat-summarization',
@@ -361,8 +360,7 @@ const features = [
     title: 'AI-Powered Summarization',
     description:
       'Instantly generate concise summaries, key takeaways, and bullet-point notes from any lecture content.',
-    color: '#8b5cf6',
-    gradient: 'linear-gradient(135deg, rgba(139,92,246,0.15), rgba(236,72,153,0.05))',
+    color: '#c98b56',
   },
   {
     id: 'feat-notes',
@@ -370,8 +368,7 @@ const features = [
     title: 'Smart Note Generation',
     description:
       'Structured notes with headings, definitions, and important formulas — organized exactly how you need them.',
-    color: '#10b981',
-    gradient: 'linear-gradient(135deg, rgba(16,185,129,0.15), rgba(6,182,212,0.05))',
+    color: '#7ea389',
   },
   {
     id: 'feat-doubt',
@@ -379,8 +376,7 @@ const features = [
     title: 'Doubt Resolution',
     description:
       'Highlight any confusing text and get an instant, detailed AI explanation with relevant examples.',
-    color: '#f59e0b',
-    gradient: 'linear-gradient(135deg, rgba(245,158,11,0.15), rgba(239,68,68,0.05))',
+    color: '#b89b67',
   },
 ];
 
@@ -417,7 +413,7 @@ function FeaturesSection() {
               id={f.id}
               variants={fadeUp}
               className="feature-card"
-              style={{ '--card-gradient': f.gradient, '--card-accent': f.color }}
+              style={{ '--card-accent': f.color }}
               whileHover={{ y: -6, transition: { duration: 0.25 } }}
             >
               <div className="feature-card__icon" style={{ color: f.color }}>{f.icon}</div>
@@ -436,10 +432,10 @@ function FeaturesSection() {
    HOW IT WORKS SECTION
 ───────────────────────────────────────────── */
 const steps = [
-  { step: '01', icon: <Upload size={22} />, title: 'Upload or Record', description: 'Import your lecture audio, video, PDF, or paste text directly into the workspace.', color: '#3b82f6' },
-  { step: '02', icon: <Wand2 size={22} />, title: 'AI Processes It', description: 'Our AI engine transcribes, analyzes, and extracts the key information automatically.', color: '#8b5cf6' },
-  { step: '03', icon: <BookOpen size={22} />, title: 'Get Smart Notes', description: 'Receive beautifully structured notes, summaries, and insights ready to review.', color: '#10b981' },
-  { step: '04', icon: <BarChart3 size={22} />, title: 'Review & Learn', description: 'Interact with your notes, resolve doubts, and find linked resources for deeper learning.', color: '#f59e0b' },
+  { step: '01', icon: <Upload size={22} />, title: 'Upload or Record', description: 'Import your lecture audio, video, PDF, or paste text directly into the workspace.', color: '#d97757' },
+  { step: '02', icon: <Wand2 size={22} />, title: 'AI Processes It', description: 'Our AI engine transcribes, analyzes, and extracts the key information automatically.', color: '#c98b56' },
+  { step: '03', icon: <BookOpen size={22} />, title: 'Get Smart Notes', description: 'Receive beautifully structured notes, summaries, and insights ready to review.', color: '#7ea389' },
+  { step: '04', icon: <BarChart3 size={22} />, title: 'Review & Learn', description: 'Interact with your notes, resolve doubts, and find linked resources for deeper learning.', color: '#b89b67' },
 ];
 
 function HowItWorksSection() {
@@ -676,8 +672,8 @@ function Footer() {
   };
 
   const socialLinks = [
-    { label: 'Twitter', href: '#', icon: '𝕏' },
-    { label: 'GitHub', href: '#', icon: '⌥' },
+    { label: 'Twitter', href: '#', icon: 'X' },
+    { label: 'GitHub', href: '#', icon: 'GH' },
     { label: 'LinkedIn', href: '#', icon: 'in' },
   ];
 
@@ -716,7 +712,7 @@ function Footer() {
 
         <div className="footer__bottom">
           <p className="footer__copy">© {year} Lecture Assistant. All rights reserved.</p>
-          <p className="footer__made">Built with ❤️ for students everywhere.</p>
+          <p className="footer__made">Built for students everywhere.</p>
         </div>
       </div>
     </footer>

@@ -18,16 +18,16 @@ export default function Layout({ children }) {
     <div className="relative min-h-screen overflow-hidden bg-background">
       {/* Decorative ambient blobs */}
       <div className="pointer-events-none absolute inset-0 opacity-20 dark:opacity-15">
-        <div className="absolute -top-24 -left-24 h-80 w-80 rounded-full bg-primary/20 blur-3xl" />
-        <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-violet-500/15 blur-3xl" />
-        <div className="absolute top-1/3 -right-12 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl" />
+        <div className="absolute -top-24 -left-24 h-80 w-80 rounded-full bg-[#d97757]/15 blur-3xl" />
+        <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-[#7ea389]/12 blur-3xl" />
+        <div className="absolute top-1/3 -right-12 h-64 w-64 rounded-full bg-[#b89b67]/10 blur-3xl" />
       </div>
 
       {/* App Navbar — only for authenticated inner pages */}
       <nav
         className="sticky top-0 z-50 backdrop-blur-xl border-b"
         style={{
-          background: 'rgba(8, 12, 20, 0.88)',
+          background: 'rgba(17, 19, 21, 0.9)',
           borderColor: 'rgba(255,255,255,0.07)',
         }}
         role="navigation"
@@ -48,7 +48,7 @@ export default function Layout({ children }) {
                     width: 28,
                     height: 28,
                     borderRadius: 8,
-                    background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                    background: '#d97757',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -82,7 +82,7 @@ export default function Layout({ children }) {
                     width: 28,
                     height: 28,
                     borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                    background: '#d97757',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -174,9 +174,9 @@ function NavLink({ to, icon, label, active }) {
         fontWeight: 500,
         textDecoration: 'none',
         transition: 'background 0.15s, color 0.15s',
-        background: active ? 'rgba(99,102,241,0.12)' : 'transparent',
-        color: active ? '#a5b4fc' : 'rgba(148,163,184,0.8)',
-        border: active ? '1px solid rgba(99,102,241,0.2)' : '1px solid transparent',
+        background: active ? 'rgba(217,119,87,0.14)' : 'transparent',
+        color: active ? '#f0b39e' : 'rgba(148,163,184,0.8)',
+        border: active ? '1px solid rgba(217,119,87,0.28)' : '1px solid transparent',
       }}
     >
       {icon}

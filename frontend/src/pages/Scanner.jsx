@@ -18,7 +18,7 @@ export default function Scanner() {
         value: 'summarization',
         label: 'Summarize',
         className:
-          'px-4 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium border border-[rgba(255,255,255,0.1)] transition-all',
+          'px-4 py-2 rounded-xl bg-[#d97757] text-white hover:bg-[#bf6548] text-sm font-medium border border-[rgba(255,255,255,0.1)] transition-all',
       },
     ],
     []
@@ -64,8 +64,8 @@ export default function Scanner() {
           className="mb-8"
         >
           <h1 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-3">
-             <div className="bg-primary/10 p-2.5 rounded-xl border border-primary/20">
-                <ScanLine className="w-7 h-7 text-primary" /> 
+             <div className="bg-[#d97757]/12 p-2.5 rounded-xl border border-[#d97757]/28">
+               <ScanLine className="w-7 h-7 text-[#f0b39e]" /> 
              </div>
              AI Smart Scanner
           </h1>
@@ -81,15 +81,15 @@ export default function Scanner() {
            transition={{ delay: 0.1 }}
            className="workspace-panel p-1 rounded-3xl mb-8"
         >
-          <div className="bg-[#0a0f18] rounded-[22px] p-6 sm:p-8 h-full border border-white/5 relative overflow-hidden">
+          <div className="bg-[#181b21] rounded-[22px] p-6 sm:p-8 h-full border border-white/10 relative overflow-hidden">
              
              {/* Decorative background glow inside the upload card */}
-             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] pointer-events-none" />
+             <div className="absolute top-0 right-0 w-64 h-64 bg-[#d97757]/10 rounded-full blur-[80px] pointer-events-none" />
 
              <div className="relative z-10 flex flex-col gap-4">
                 <div className="flex items-center gap-2 mb-2">
-                   <Sparkles className="w-5 h-5 text-purple-400" />
-                   <h2 className="text-lg font-semibold text-white">Input Source</h2>
+                   <Sparkles className="w-5 h-5 text-[#f0b39e]" />
+                   <h2 className="text-lg font-semibold text-[#f4f1ed]">Input Source</h2>
                 </div>
                 
                 <FileUploader
@@ -126,16 +126,16 @@ export default function Scanner() {
             <div className="lg:col-span-7 flex flex-col gap-6">
               
               <div className="workspace-panel rounded-3xl p-1 relative group overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <div className="bg-[#0a0f18]/90 backdrop-blur-xl rounded-[22px] p-6 h-full border border-white/5 relative z-10">
+                <div className="absolute inset-0 bg-[#d97757]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="bg-[#181b21]/90 backdrop-blur-xl rounded-[22px] p-6 h-full border border-white/10 relative z-10">
                   <div className="flex items-center gap-2 mb-4">
-                    <div className="bg-indigo-500/10 p-1.5 rounded-lg">
-                       <CheckCircle className="w-4 h-4 text-indigo-400" />
+                    <div className="bg-[#d97757]/15 p-1.5 rounded-lg">
+                       <CheckCircle className="w-4 h-4 text-[#f0b39e]" />
                     </div>
-                    <h2 className="text-base font-semibold text-white">AI Summary</h2>
+                    <h2 className="text-base font-semibold text-[#f4f1ed]">AI Summary</h2>
                   </div>
                   {summary ? (
-                    <div className="text-sm text-[rgba(240,244,255,0.75)] leading-relaxed whitespace-pre-wrap">
+                    <div className="text-sm text-[#ece3dc]/85 leading-relaxed whitespace-pre-wrap">
                       <MarkdownRenderer content={summary} />
                     </div>
                   ) : (
@@ -145,18 +145,18 @@ export default function Scanner() {
               </div>
 
               <div className="workspace-panel rounded-3xl p-1 relative group overflow-hidden">
-                <div className="bg-[#0a0f18]/90 backdrop-blur-xl rounded-[22px] p-6 h-full border border-white/5 relative z-10">
+                <div className="bg-[#181b21]/90 backdrop-blur-xl rounded-[22px] p-6 h-full border border-white/10 relative z-10">
                   <div className="flex items-center gap-2 mb-4">
-                    <div className="bg-emerald-500/10 p-1.5 rounded-lg">
-                       <LayoutPanelLeft className="w-4 h-4 text-emerald-400" />
+                    <div className="bg-[#7ea389]/15 p-1.5 rounded-lg">
+                       <LayoutPanelLeft className="w-4 h-4 text-[#b9d0be]" />
                     </div>
-                    <h2 className="text-base font-semibold text-white">Key Extraction Points</h2>
+                    <h2 className="text-base font-semibold text-[#f4f1ed]">Key Extraction Points</h2>
                   </div>
                   {keyPoints && keyPoints.length > 0 ? (
                     <ul className="space-y-3">
                       {keyPoints.map((kp, idx) => (
-                        <li key={idx} className="flex gap-3 text-sm text-[rgba(240,244,255,0.85)] leading-relaxed bg-white/[0.02] p-3 rounded-xl border border-white/[0.02]">
-                          <span className="text-emerald-500 mt-0.5 shrink-0">✦</span>
+                        <li key={idx} className="flex gap-3 text-sm text-[#ece3dc]/85 leading-relaxed bg-white/[0.02] p-3 rounded-xl border border-white/[0.05]">
+                          <span className="text-[#b9d0be] mt-0.5 shrink-0">-</span>
                           {kp}
                         </li>
                       ))}
@@ -172,12 +172,12 @@ export default function Scanner() {
             {/* Right Column: OCR Raw Text */}
             <div className="lg:col-span-5">
               <div className="workspace-panel rounded-3xl p-1 h-full relative group">
-                <div className="bg-[#0a0f18]/90 backdrop-blur-xl rounded-[22px] p-6 h-full border border-white/5 flex flex-col">
+                 <div className="bg-[#181b21]/90 backdrop-blur-xl rounded-[22px] p-6 h-full border border-white/10 flex flex-col">
                   <div className="flex items-center gap-2 mb-4 shrink-0">
-                    <div className="bg-blue-500/10 p-1.5 rounded-lg">
-                       <FileText className="w-4 h-4 text-blue-400" />
+                    <div className="bg-[#b89b67]/15 p-1.5 rounded-lg">
+                      <FileText className="w-4 h-4 text-[#dfc8a1]" />
                     </div>
-                    <h2 className="text-base font-semibold text-white">Raw OCR Text</h2>
+                    <h2 className="text-base font-semibold text-[#f4f1ed]">Raw OCR Text</h2>
                   </div>
                   {ocrText ? (
                     <div className="flex-1 min-h-[300px] overflow-y-auto custom-scrollbar pr-2">

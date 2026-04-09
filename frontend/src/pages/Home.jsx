@@ -609,7 +609,7 @@ export default function Home() {
                 <h2 className="ws-panel__title">Live Transcript</h2>
               </div>
               {isProcessing && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', color: '#818cf8' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', color: '#f0b39e' }}>
                   <Loader2 size={13} style={{ animation: 'ws-spin 0.75s linear infinite' }} />
                   Processing…
                 </div>
@@ -720,7 +720,7 @@ export default function Home() {
                       >
                         {res.type === 'video'
                           ? <ExternalLink size={11} style={{ color: '#f87171' }} />
-                          : <BookOpen size={11} style={{ color: '#60a5fa' }} />
+                          : <BookOpen size={11} style={{ color: '#f0b39e' }} />
                         }
                         <span className="ws-resource__text">{res.title}</span>
                       </a>
