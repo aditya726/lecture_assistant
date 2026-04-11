@@ -1,186 +1,166 @@
-import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { LogOut, User, Moon, Sun, BookOpen, ScanLine, LayoutDashboard } from 'lucide-react';
-import { useTheme } from '../contexts/ThemeContext';
+import { motion } from "framer-motion";
+import { Link, useLocation } from "react-router-dom";
+import { BookOpenText, LayoutDashboard, LogOut, Menu, Moon, ScanLine, Sparkles, StickyNote, Sun } from "lucide-react";
+
+import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
+import { cn } from "../lib/utils";
+import { Avatar, AvatarFallback } from "./ui/avatar";
+import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { Separator } from "./ui/separator";
+import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
+
+const navItems = [
+  { to: "/workspace", label: "Studio", icon: LayoutDashboard },
+  { to: "/notes", label: "Board", icon: StickyNote },
+  { to: "/scanner", label: "Scanner", icon: ScanLine },
+];
+
+function DesktopNav({ pathname }) {
+  return (
+    <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
+      {navItems.map((item) => {
+        const Icon = item.icon;
+        const active = pathname.startsWith(item.to);
+        return (
+          <Button
+            key={item.to}
+            asChild
+            variant={active ? "secondary" : "ghost"}
+            className={cn("rounded-full px-4", active && "glow-ring bg-secondary/80")}
+          >
+            <Link to={item.to}>
+              <Icon className="mr-2 h-4 w-4" />
+              {item.label}
+            </Link>
+          </Button>
+        );
+      })}
+    </nav>
+  );
+}
+
+function MobileNav({ pathname }) {
+  return (
+    <div className="grid gap-2 py-2">
+      {navItems.map((item) => {
+        const Icon = item.icon;
+        const active = pathname.startsWith(item.to);
+        return (
+          <Button key={item.to} asChild variant={active ? "secondary" : "ghost"} className="justify-start">
+            <Link to={item.to}>
+              <Icon className="mr-2 h-4 w-4" />
+              {item.label}
+            </Link>
+          </Button>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function Layout({ children }) {
   const { user, logout, isAuthenticated } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
 
-  // Landing page manages its own full-page layout (with its own nav)
-  // so we ALWAYS pass through at "/" — for both auth and unauth users
-  if (!isAuthenticated || location.pathname === '/') {
-    return children;
-  }
+  if (!isAuthenticated || location.pathname === "/") return children;
+
+  const initials = user?.email?.slice(0, 2)?.toUpperCase() || "U";
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background">
-      {/* Decorative ambient blobs */}
-      <div className="pointer-events-none absolute inset-0 opacity-20 dark:opacity-15">
-        <div className="absolute -top-24 -left-24 h-80 w-80 rounded-full bg-[#d97757]/15 blur-3xl" />
-        <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-[#7ea389]/12 blur-3xl" />
-        <div className="absolute top-1/3 -right-12 h-64 w-64 rounded-full bg-[#b89b67]/10 blur-3xl" />
+    <div className="premium-shell min-h-screen">
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="float-up absolute left-[10%] top-24 h-48 w-48 rounded-full bg-cyan-400/15 blur-3xl" />
+        <div className="float-down absolute right-[12%] top-20 h-52 w-52 rounded-full bg-violet-400/15 blur-3xl" />
       </div>
 
-      {/* App Navbar — only for authenticated inner pages */}
-      <nav
-        className="sticky top-0 z-50 backdrop-blur-xl border-b"
-        style={{
-          background: 'rgba(17, 19, 21, 0.9)',
-          borderColor: 'rgba(255,255,255,0.07)',
-        }}
-        role="navigation"
-        aria-label="App navigation"
+      <motion.header
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        className="sticky top-0 z-40 border-b border-white/10 bg-background/40 backdrop-blur-2xl"
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-14">
-
-            {/* Left: Logo + links */}
-            <div className="flex items-center gap-6">
-              <Link
-                to="/"
-                className="flex items-center gap-2 text-white font-semibold text-sm tracking-tight hover:opacity-80 transition-opacity"
-                id="app-nav-logo"
-              >
-                <span
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 8,
-                    background: '#d97757',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}
-                >
-                  <BookOpen size={14} color="white" />
-                </span>
-                Lecture Assistant
-              </Link>
-
-              <div
-                className="hidden md:flex items-center gap-1"
-                style={{ borderLeft: '1px solid rgba(255,255,255,0.08)', paddingLeft: 20 }}
-              >
-                <NavLink to="/workspace" icon={<LayoutDashboard size={14} />} label="Workspace" active={location.pathname === '/workspace'} />
-                <NavLink to="/notes" icon={<BookOpen size={14} />} label="Notes" active={location.pathname === '/notes'} />
-                <NavLink to="/scanner" icon={<ScanLine size={14} />} label="Smart Scanner" active={location.pathname === '/scanner'} />
+        <div className="mx-auto flex h-16 max-w-[1400px] items-center gap-3 px-4 sm:px-6">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="icon" className="lg:hidden" aria-label="Open navigation menu">
+                <Menu className="h-4 w-4" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="glass-panel">
+              <div className="pb-3">
+                <Brand />
               </div>
-            </div>
+              <Separator className="mb-3" />
+              <MobileNav pathname={location.pathname} />
+            </SheetContent>
+          </Sheet>
 
-            {/* Right: user info + actions */}
-            <div className="flex items-center gap-2">
-              {/* User email */}
-              <div
-                className="hidden sm:flex items-center gap-2 text-xs font-medium"
-                style={{ color: 'rgba(148,163,184,0.8)' }}
-              >
-                <div
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: '50%',
-                    background: '#d97757',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: 'white',
-                    flexShrink: 0,
-                  }}
-                >
-                  {user?.email?.[0]?.toUpperCase() || 'U'}
-                </div>
-                <span className="truncate max-w-[160px]">{user?.email}</span>
-              </div>
+          <Brand />
+          <Separator orientation="vertical" className="mx-1 hidden h-6 lg:block" />
+          <DesktopNav pathname={location.pathname} />
 
-              {/* Theme toggle */}
-              <button
-                id="theme-toggle-btn"
-                onClick={toggleTheme}
-                aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '5px 10px',
-                  borderRadius: 8,
-                  border: '1px solid rgba(255,255,255,0.09)',
-                  background: 'rgba(255,255,255,0.04)',
-                  color: 'rgba(148,163,184,0.85)',
-                  fontSize: 12,
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  transition: 'background 0.2s, color 0.2s',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = '#e2e8f0'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'rgba(148,163,184,0.85)'; }}
-              >
-                {theme === 'dark' ? <Sun size={13} /> : <Moon size={13} />}
-                <span className="hidden sm:inline">{theme === 'dark' ? 'Light' : 'Dark'}</span>
-              </button>
+          <div className="ml-auto flex items-center gap-2">
+            <Badge className="hidden rounded-full bg-violet-500/80 text-white sm:inline-flex">Flagship</Badge>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={toggleTheme}
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
 
-              {/* Logout */}
-              <button
-                id="logout-btn"
-                onClick={logout}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '5px 12px',
-                  borderRadius: 8,
-                  border: '1px solid rgba(239,68,68,0.2)',
-                  background: 'rgba(239,68,68,0.08)',
-                  color: '#f87171',
-                  fontSize: 12,
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  transition: 'background 0.2s',
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.15)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'rgba(239,68,68,0.08)'}
-              >
-                <LogOut size={13} />
-                <span>Logout</span>
-              </button>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-9 gap-2 rounded-full px-2">
+                  <Avatar className="ring-1 ring-white/25">
+                    <AvatarFallback>{initials}</AvatarFallback>
+                  </Avatar>
+                  <span className="hidden max-w-[160px] truncate text-sm sm:inline">{user?.email}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="glass-panel">
+                <DropdownMenuLabel>{user?.email}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={toggleTheme}>
+                  {theme === "dark" ? "Use light appearance" : "Use dark appearance"}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
-      </nav>
+      </motion.header>
 
-      <main className="relative">
-        {children}
-      </main>
+      <main className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6">{children}</main>
     </div>
   );
 }
 
-/* ── Inner nav link helper ── */
-function NavLink({ to, icon, label, active }) {
+function Brand() {
   return (
-    <Link
-      to={to}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 6,
-        padding: '5px 12px',
-        borderRadius: 8,
-        fontSize: 13,
-        fontWeight: 500,
-        textDecoration: 'none',
-        transition: 'background 0.15s, color 0.15s',
-        background: active ? 'rgba(217,119,87,0.14)' : 'transparent',
-        color: active ? '#f0b39e' : 'rgba(148,163,184,0.8)',
-        border: active ? '1px solid rgba(217,119,87,0.28)' : '1px solid transparent',
-      }}
-    >
-      {icon}
-      {label}
+    <Link to="/" className="group inline-flex items-center gap-2">
+      <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-cyan-500 to-violet-500 text-white shadow-lg shadow-cyan-500/20 transition-transform duration-300 group-hover:scale-105">
+        <BookOpenText className="h-4 w-4" />
+      </span>
+      <span className="flex items-center gap-1 font-semibold tracking-tight text-foreground">
+        Lecture Assistant
+        <Sparkles className="h-3.5 w-3.5 text-cyan-400" />
+      </span>
     </Link>
   );
 }

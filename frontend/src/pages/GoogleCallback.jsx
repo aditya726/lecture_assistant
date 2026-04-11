@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Loader2 } from 'lucide-react';
 
 export default function GoogleCallback() {
   const [searchParams] = useSearchParams();
@@ -18,7 +20,7 @@ export default function GoogleCallback() {
       
       // Update auth state and redirect
       checkAuth().then(() => {
-        navigate('/');
+        navigate('/workspace');
       });
     } else {
       // No tokens, redirect to login
@@ -27,11 +29,16 @@ export default function GoogleCallback() {
   }, [searchParams, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#111315]">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#d97757] mx-auto mb-4"></div>
-        <p className="text-[#ece3dc]/80">Completing sign in...</p>
-      </div>
+    <div className="grid min-h-screen place-items-center px-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-lg">Completing sign in</CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center gap-3 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Finishing Google authentication and preparing your workspace.
+        </CardContent>
+      </Card>
     </div>
   );
 }

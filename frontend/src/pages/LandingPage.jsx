@@ -1,770 +1,368 @@
-import '../landing.css';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { useEffect, useRef, useState } from 'react';
-import { motion, useInView } from 'framer-motion';
-import api from '../services/api';
-import {
-  Sparkles, Mic, FileText, ArrowRight, Zap,
-  Play, Star, Check, Menu, X, Brain, BookOpen,
-  Layers, MessageSquare, Upload, Wand2, BarChart3, Clock
-} from 'lucide-react';
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { ArrowRight, AudioLines, Brain, FileText, Pencil, PlayCircle, Sparkles, Wand2 } from "lucide-react";
 
-/* ─────────────────────────────────────────────
-   Animation Variants
-───────────────────────────────────────────── */
-const fadeUp = {
-  hidden: { opacity: 0, y: 40 },
-  visible: (i = 0) => ({
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] },
-  }),
-};
+import { useAuth } from "../contexts/AuthContext";
+import api from "../services/api";
+import { Badge } from "../components/ui/badge";
+import { Button } from "../components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 
-const fadeIn = {
-  hidden: { opacity: 0 },
-  visible: (i = 0) => ({
-    opacity: 1,
-    transition: { duration: 0.5, delay: i * 0.1 },
-  }),
-};
-
-/* ─────────────────────────────────────────────
-   Scroll-triggered Section Wrapper
-───────────────────────────────────────────── */
-function AnimatedSection({ children, className = '' }) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-80px' });
-  return (
-    <motion.div
-      ref={ref}
-      initial="hidden"
-      animate={inView ? 'visible' : 'hidden'}
-      variants={fadeUp}
-      className={className}
-    >
-      {children}
-    </motion.div>
-  );
-}
-
-/* ─────────────────────────────────────────────
-   NAVBAR — fully standalone, no Layout dependency
-───────────────────────────────────────────── */
-function Navbar({ user }) {
-  const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
-  const navLinks = [
-    { label: 'Features', href: '#features' },
-    { label: 'How It Works', href: '#how-it-works' },
-    { label: 'Demo', href: '#demo' },
-    { label: 'About', href: '#about' },
-  ];
-
-  return (
-    <>
-      <nav
-        id="landing-navbar"
-        role="navigation"
-        aria-label="Main navigation"
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 200,
-          transition: 'background 0.3s ease, box-shadow 0.3s ease, padding 0.3s ease',
-          padding: scrolled ? '10px 0' : '18px 0',
-          background: scrolled ? 'rgba(17, 19, 21, 0.92)' : 'transparent',
-          backdropFilter: scrolled ? 'blur(20px) saturate(180%)' : 'none',
-          WebkitBackdropFilter: scrolled ? 'blur(20px) saturate(180%)' : 'none',
-          boxShadow: scrolled
-            ? '0 1px 0 rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.4)'
-            : 'none',
-        }}
-      >
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* Logo */}
-          <Link to="/" id="nav-logo" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', flexShrink: 0 }}>
-            <span style={{
-              width: 36, height: 36, borderRadius: 10,
-              background: '#d97757',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 4px 16px rgba(217,119,87,0.35)', flexShrink: 0,
-            }}>
-              <Sparkles size={17} color="white" />
-            </span>
-            <span style={{ fontSize: '1.05rem', fontWeight: 700, letterSpacing: '-0.02em', color: '#f0f4ff', whiteSpace: 'nowrap' }}>
-              Lecture Assistant
-            </span>
-          </Link>
-
-          <div style={{ flex: 1 }} />
-
-          {/* Desktop nav links */}
-          <ul className="landing-nav__links" role="list">
-            {navLinks.map((link) => (
-              <li key={link.href}>
-                <a href={link.href} className="landing-nav__link">{link.label}</a>
-              </li>
-            ))}
-          </ul>
-
-          {/* CTA */}
-          <div className="landing-nav__cta">
-            {user ? (
-              <Link to="/workspace" className="btn btn--primary" id="nav-workspace-btn">
-                Dashboard <ArrowRight size={15} />
-              </Link>
-            ) : (
-              <>
-                <Link to="/login" className="btn btn--ghost" id="nav-signin-btn">Sign In</Link>
-                <Link to="/register" className="btn btn--primary" id="nav-getstarted-btn">
-                  Get Started <ArrowRight size={15} />
-                </Link>
-              </>
-            )}
-          </div>
-
-          {/* Hamburger */}
-          <button
-            className="landing-nav__hamburger"
-            onClick={() => setMenuOpen((o) => !o)}
-            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-            aria-expanded={menuOpen}
-            id="nav-hamburger"
-          >
-            {menuOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-        </div>
-      </nav>
-
-      {/* Mobile dropdown */}
-      {menuOpen && (
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.18 }}
-          style={{
-            position: 'fixed', top: 64, left: 0, right: 0, zIndex: 199,
-            background: 'rgba(17, 19, 21, 0.98)',
-            borderBottom: '1px solid rgba(255,255,255,0.08)',
-            backdropFilter: 'blur(20px)',
-            padding: '16px 24px 20px',
-            display: 'flex', flexDirection: 'column', gap: 4,
-          }}
-        >
-          {navLinks.map((link) => (
-            <a key={link.href} href={link.href} className="landing-nav__mobile-link" onClick={() => setMenuOpen(false)}>
-              {link.label}
-            </a>
-          ))}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 14 }}>
-            {user ? (
-              <Link to="/workspace" className="btn btn--primary btn--full" onClick={() => setMenuOpen(false)}>
-                Dashboard <ArrowRight size={15} />
-              </Link>
-            ) : (
-              <>
-                <Link to="/login" className="btn btn--ghost btn--full" onClick={() => setMenuOpen(false)}>Sign In</Link>
-                <Link to="/register" className="btn btn--primary btn--full" onClick={() => setMenuOpen(false)}>Get Started</Link>
-              </>
-            )}
-          </div>
-        </motion.div>
-      )}
-    </>
-  );
-}
-
-/* ─────────────────────────────────────────────
-   HERO SECTION
-───────────────────────────────────────────── */
-function HeroSection({ user, userCount }) {
-  const videoRef = useRef(null);
-
-  // Fix for React SPA navigation:
-  // Browsers don't re-trigger `autoPlay` when a component re-mounts
-  // (e.g., navigating away then back). We must manually call load() + play().
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    video.load();
-
-    const playPromise = video.play();
-    if (playPromise !== undefined) {
-      playPromise.catch(() => {
-        // Autoplay blocked by browser policy (e.g. no user gesture yet).
-      });
-    }
-
-    // Pause & reset when navigating away
-    return () => {
-      video.pause();
-      video.currentTime = 0;
-    };
-  }, []);
-
-  const badges = [
-    { label: 'AI-Powered', icon: <Brain size={14} />, delay: 0 },
-    { label: 'Real-time', icon: <Zap size={14} />, delay: 0.2 },
-    { label: 'Multi-format', icon: <Layers size={14} />, delay: 0.4 },
-  ];
-
-  return (
-    <section className="hero" id="hero" aria-label="Hero section">
-      {/* Video Background */}
-      <div className="hero__video-wrap">
-        <video
-          ref={videoRef}
-          className="hero__video"
-          muted
-          loop
-          playsInline
-          preload="auto"
-          aria-hidden="true"
-        >
-          {/* Direct CDN link to the original "Woman writing" video */}
-          <source
-            src="https://videos.pexels.com/video-files/3195394/3195394-hd_1920_1080_25fps.mp4"
-            type="video/mp4"
-          />
-          {/* Fallback education video: studying at a desk */}
-          <source
-            src="https://videos.pexels.com/video-files/4121235/4121235-hd_1920_1080_25fps.mp4"
-            type="video/mp4"
-          />
-        </video>
-        <div className="hero__overlay" />
-        <div className="hero__gradient-mesh" />
-      </div>
-
-      <div className="landing-container hero__content">
-        {/* Badge pills */}
-        <motion.div
-          className="hero__badges"
-          initial="hidden"
-          animate="visible"
-          variants={{ visible: { transition: { staggerChildren: 0.15 } } }}
-        >
-          {badges.map((badge) => (
-            <motion.span key={badge.label} variants={fadeIn} custom={badge.delay} className="hero__badge">
-              {badge.icon} {badge.label}
-            </motion.span>
-          ))}
-        </motion.div>
-
-        {/* Headline */}
-        <motion.h1
-          className="hero__title"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <span className="hero__title-robotic">Transform Your Lectures</span>
-          <span className="hero__title-handwritten">into Smart Notes</span>
-        </motion.h1>
-
-        {/* Subtitle */}
-        <motion.p
-          className="hero__subtitle"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
-        >
-          Lecture Assistant uses cutting-edge AI to transcribe, summarize, and structure your
-          lectures in real-time — so you can focus on learning, not note-taking.
-        </motion.p>
-
-        {/* CTA Buttons */}
-        <motion.div
-          className="hero__actions"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        >
-          {user ? (
-            <Link to="/workspace" className="btn btn--hero btn--primary" id="hero-workspace-btn">
-              <span>Enter Workspace</span> <ArrowRight size={18} />
-            </Link>
-          ) : (
-            <>
-              <Link to="/register" className="btn btn--hero btn--primary" id="hero-try-btn">
-                <span>Try it Now — Free</span> <ArrowRight size={18} />
-              </Link>
-              <a href="#demo" className="btn btn--hero btn--glass" id="hero-demo-btn">
-                <Play size={16} className="hero__play-icon" />
-                <span>See Demo</span>
-              </a>
-            </>
-          )}
-        </motion.div>
-
-        {/* Social proof */}
-        <motion.div
-          className="hero__social-proof"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.75 }}
-        >
-          <div className="hero__stars">
-            {[...Array(5)].map((_, i) => (
-              <Star key={i} size={14} className="hero__star" fill="currentColor" />
-            ))}
-          </div>
-          <span className="hero__social-text">
-            Trusted by {userCount !== null ? `${userCount.toLocaleString()}+` : '…'} students &amp; educators
-          </span>
-        </motion.div>
-      </div>
-
-      {/* Scroll indicator */}
-      <motion.div
-        className="hero__scroll"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.2 }}
-      >
-        <div className="hero__scroll-line" />
-        <span className="hero__scroll-text">Scroll to explore</span>
-      </motion.div>
-    </section>
-  );
-}
-
-/* ─────────────────────────────────────────────
-   FEATURES SECTION
-───────────────────────────────────────────── */
 const features = [
   {
-    id: 'feat-transcription',
-    icon: <Mic size={24} />,
-    title: 'Real-Time Transcription',
-    description:
-      'Record live audio or upload files — our AI converts speech to text with 98%+ accuracy, supporting 40+ languages.',
-    color: '#d97757',
+    title: "Realtime Transcript Engine",
+    description: "Capture every lecture detail with low-latency audio analysis and precision text alignment.",
+    icon: AudioLines,
   },
   {
-    id: 'feat-summarization',
-    icon: <Brain size={24} />,
-    title: 'AI-Powered Summarization',
-    description:
-      'Instantly generate concise summaries, key takeaways, and bullet-point notes from any lecture content.',
-    color: '#c98b56',
+    title: "AI Narrative Structuring",
+    description: "Transform raw lecture streams into polished concept maps, summaries, and revision tracks.",
+    icon: FileText,
   },
   {
-    id: 'feat-notes',
-    icon: <FileText size={24} />,
-    title: 'Smart Note Generation',
-    description:
-      'Structured notes with headings, definitions, and important formulas — organized exactly how you need them.',
-    color: '#7ea389',
-  },
-  {
-    id: 'feat-doubt',
-    icon: <MessageSquare size={24} />,
-    title: 'Doubt Resolution',
-    description:
-      'Highlight any confusing text and get an instant, detailed AI explanation with relevant examples.',
-    color: '#b89b67',
+    title: "Contextual Doubt Resolution",
+    description: "Highlight any concept and receive an explanation tuned to the exact lecture context.",
+    icon: Brain,
   },
 ];
 
-function FeaturesSection() {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-80px' });
-
-  return (
-    <section className="section" id="features" aria-labelledby="features-heading">
-      <div className="landing-container">
-        <AnimatedSection className="section__header">
-          <span className="section__label">
-            <Zap size={14} /> Features
-          </span>
-          <h2 className="section__title" id="features-heading">
-            Everything You Need to
-            <span className="text-gradient"> Learn Smarter</span>
-          </h2>
-          <p className="section__subtitle">
-            Powerful tools designed to supercharge your learning workflow.
-          </p>
-        </AnimatedSection>
-
-        <motion.div
-          ref={ref}
-          className="features-grid"
-          initial="hidden"
-          animate={inView ? 'visible' : 'hidden'}
-          variants={{ visible: { transition: { staggerChildren: 0.12 } } }}
-        >
-          {features.map((f) => (
-            <motion.div
-              key={f.id}
-              id={f.id}
-              variants={fadeUp}
-              className="feature-card"
-              style={{ '--card-accent': f.color }}
-              whileHover={{ y: -6, transition: { duration: 0.25 } }}
-            >
-              <div className="feature-card__icon" style={{ color: f.color }}>{f.icon}</div>
-              <h3 className="feature-card__title">{f.title}</h3>
-              <p className="feature-card__desc">{f.description}</p>
-              <div className="feature-card__accent-bar" style={{ background: f.color }} />
-            </motion.div>
-          ))}
-        </motion.div>
-      </div>
-    </section>
-  );
-}
-
-/* ─────────────────────────────────────────────
-   HOW IT WORKS SECTION
-───────────────────────────────────────────── */
-const steps = [
-  { step: '01', icon: <Upload size={22} />, title: 'Upload or Record', description: 'Import your lecture audio, video, PDF, or paste text directly into the workspace.', color: '#d97757' },
-  { step: '02', icon: <Wand2 size={22} />, title: 'AI Processes It', description: 'Our AI engine transcribes, analyzes, and extracts the key information automatically.', color: '#c98b56' },
-  { step: '03', icon: <BookOpen size={22} />, title: 'Get Smart Notes', description: 'Receive beautifully structured notes, summaries, and insights ready to review.', color: '#7ea389' },
-  { step: '04', icon: <BarChart3 size={22} />, title: 'Review & Learn', description: 'Interact with your notes, resolve doubts, and find linked resources for deeper learning.', color: '#b89b67' },
+const statCards = [
+  { label: "Processing latency", value: "~28 sec" },
+  { label: "Supported sources", value: "Audio, Docs, Images" },
+  { label: "Designed for", value: "Ambitious learners" },
 ];
 
-function HowItWorksSection() {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-80px' });
+const container = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.08 } },
+};
 
-  return (
-    <section className="section section--alt" id="how-it-works" aria-labelledby="how-heading">
-      <div className="landing-container">
-        <AnimatedSection className="section__header">
-          <span className="section__label">
-            <Clock size={14} /> Process
-          </span>
-          <h2 className="section__title" id="how-heading">
-            From Lecture to Notes in
-            <span className="text-gradient"> Minutes</span>
-          </h2>
-          <p className="section__subtitle">A seamless four-step workflow designed for speed and clarity.</p>
-        </AnimatedSection>
+const item = {
+  hidden: { opacity: 0, y: 18 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] } },
+};
 
-        <motion.div
-          ref={ref}
-          className="steps-grid"
-          initial="hidden"
-          animate={inView ? 'visible' : 'hidden'}
-          variants={{ visible: { transition: { staggerChildren: 0.14 } } }}
-        >
-          {steps.map((s, i) => (
-            <motion.div
-              key={s.step}
-              variants={fadeUp}
-              className="step-card"
-              whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
-            >
-              <div className="step-card__number" style={{ color: s.color }}>{s.step}</div>
-              <div className="step-card__icon-wrap" style={{ '--step-color': s.color }}>
-                <span style={{ color: s.color }}>{s.icon}</span>
-              </div>
-              <h3 className="step-card__title">{s.title}</h3>
-              <p className="step-card__desc">{s.description}</p>
-              {i < steps.length - 1 && <div className="step-card__connector" />}
-            </motion.div>
-          ))}
-        </motion.div>
-      </div>
-    </section>
-  );
-}
-
-/* ─────────────────────────────────────────────
-   DEMO / INPUT SECTION
-───────────────────────────────────────────── */
-function DemoSection() {
-  const [inputText, setInputText] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [result, setResult] = useState(null);
-  const charLimit = 2000;
-
-  const sampleText = `Today's lecture covered the fundamental principles of machine learning.
-We discussed supervised learning, where models are trained on labeled datasets,
-and unsupervised learning, which finds patterns in unlabeled data.
-Key algorithms include linear regression for continuous outputs,
-logistic regression for classification, and neural networks for complex tasks.
-We also touched on regularization techniques like L1 and L2 to prevent overfitting.`;
-
-  const handleProcess = async () => {
-    if (!inputText.trim()) return;
-    setIsProcessing(true);
-    setResult(null);
-    await new Promise((r) => setTimeout(r, 2200));
-    setResult({
-      summary: 'This lecture introduces core machine learning concepts, contrasting supervised vs. unsupervised learning paradigms, key algorithms, and overfitting prevention through regularization.',
-      keyPoints: [
-        'Supervised learning uses labeled datasets; unsupervised learning finds patterns in unlabeled data.',
-        'Linear regression → continuous output; Logistic regression → classification tasks.',
-        'Neural networks handle complex, high-dimensional problems.',
-        'Regularization (L1/L2) reduces overfitting by penalizing model complexity.',
-      ],
-    });
-    setIsProcessing(false);
-  };
-
-  const handleSample = () => setInputText(sampleText);
-
-  return (
-    <section className="section" id="demo" aria-labelledby="demo-heading">
-      <div className="landing-container">
-        <AnimatedSection className="section__header">
-          <span className="section__label">
-            <Play size={14} /> Live Demo
-          </span>
-          <h2 className="section__title" id="demo-heading">
-            Try It Right Here,
-            <span className="text-gradient"> Right Now</span>
-          </h2>
-          <p className="section__subtitle">Paste any lecture text and watch AI magic happen.</p>
-        </AnimatedSection>
-
-        <AnimatedSection>
-          <div className="demo-card">
-            <div className="demo-card__input-section">
-              <div className="demo-card__label-row">
-                <label htmlFor="demo-input" className="demo-card__label">
-                  <FileText size={15} /> Paste Your Lecture Content
-                </label>
-                <button onClick={handleSample} className="demo-card__sample-btn" id="demo-sample-btn">
-                  Load Sample Text
-                </button>
-              </div>
-
-              <textarea
-                id="demo-input"
-                className="demo-card__textarea"
-                placeholder="Click 'Load Sample Text' to try the demo..."
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value.slice(0, charLimit))}
-                onPaste={(e) => e.preventDefault()}
-                readOnly
-                rows={8}
-              />
-
-              <div className="demo-card__footer-row">
-                <span className="demo-card__char-count">{inputText.length}/{charLimit} characters</span>
-                <motion.button
-                  id="demo-process-btn"
-                  className={`btn btn--primary btn--demo ${isProcessing ? 'btn--loading' : ''}`}
-                  onClick={handleProcess}
-                  disabled={isProcessing || !inputText.trim()}
-                  whileHover={{ scale: inputText.trim() ? 1.03 : 1 }}
-                  whileTap={{ scale: 0.97 }}
-                >
-                  {isProcessing ? (
-                    <><span className="demo-spinner" /> Processing...</>
-                  ) : (
-                    <><Wand2 size={16} /> Generate Smart Notes</>
-                  )}
-                </motion.button>
-              </div>
-            </div>
-
-            {result && (
-              <motion.div
-                className="demo-card__result"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-              >
-                <div className="demo-result__section">
-                  <h4 className="demo-result__heading">
-                    <Brain size={16} /> AI Summary
-                  </h4>
-                  <p className="demo-result__text">{result.summary}</p>
-                </div>
-                <div className="demo-result__section">
-                  <h4 className="demo-result__heading">
-                    <Check size={16} /> Key Points
-                  </h4>
-                  <ul className="demo-result__list">
-                    {result.keyPoints.map((pt, i) => (
-                      <li key={i} className="demo-result__item">
-                        <span className="demo-result__check">✓</span> {pt}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="demo-result__cta">
-                  <Link to="/register" className="btn btn--primary" id="demo-signup-btn">
-                    Get Full Access — Free <ArrowRight size={16} />
-                  </Link>
-                </div>
-              </motion.div>
-            )}
-          </div>
-        </AnimatedSection>
-      </div>
-    </section>
-  );
-}
-
-/* ─────────────────────────────────────────────
-   ABOUT / STATS STRIP
-───────────────────────────────────────────── */
-const STATIC_STATS = [
-  { id: 'accuracy', value: '98%', label: 'Transcription Accuracy' },
-  { id: 'languages', value: '40+', label: 'Languages Supported' },
-  { id: 'speed', value: '<30s', label: 'Processing Time' },
-];
-
-function AboutSection({ userCount }) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-60px' });
-
-  const allStats = [
-    ...STATIC_STATS,
+function HandwritingAnimation() {
+  const cycle = 15;
+  const lines = [
     {
-      id: 'users',
-      value: userCount !== null ? `${userCount.toLocaleString()}+` : '…',
-      label: 'Active Users',
+      text: "Capturing lectures in real time.",
+      y: 56,
+      startX: 30,
+      track: 394,
+      start: 0.6,
+      duration: 3.2,
+      hold: 0.65,
+    },
+    {
+      text: "Structuring insights as complete notes.",
+      y: 122,
+      startX: 30,
+      track: 426,
+      start: 4.7,
+      duration: 3.35,
+      hold: 0.65,
+    },
+    {
+      text: "Resolving doubts with context.",
+      y: 188,
+      startX: 30,
+      track: 366,
+      start: 8.95,
+      duration: 2.95,
+      hold: 0.7,
     },
   ];
 
-  return (
-    <section className="section section--dark" id="about" aria-labelledby="about-heading">
-      <div className="landing-container">
-        <motion.div
-          ref={ref}
-          className="stats-grid"
-          initial="hidden"
-          animate={inView ? 'visible' : 'hidden'}
-          variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
-        >
-          {allStats.map((s) => (
-            <motion.div key={s.id} variants={fadeUp} className="stat-card">
-              <span className="stat-card__value">{s.value}</span>
-              <span className="stat-card__label">{s.label}</span>
-            </motion.div>
-          ))}
-        </motion.div>
-      </div>
-    </section>
-  );
-}
+  const [clock, setClock] = useState(0);
 
-/* ─────────────────────────────────────────────
-   FOOTER
-───────────────────────────────────────────── */
-function Footer() {
-  const year = new Date().getFullYear();
+  useEffect(() => {
+    let frameId = 0;
+    const startTime = performance.now();
 
-  const footerLinks = {
-    Product: ['Features', 'Demo', 'Pricing', 'Changelog'],
-    Company: ['About', 'Blog', 'Careers', 'Contact'],
-    Legal: ['Privacy', 'Terms', 'Cookie Policy'],
+    const tick = (time) => {
+      const elapsedSeconds = (time - startTime) / 1000;
+      setClock(elapsedSeconds % cycle);
+      frameId = requestAnimationFrame(tick);
+    };
+
+    frameId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameId);
+  }, [cycle]);
+
+  const getLineProgress = (line) => {
+    const elapsed = clock - line.start;
+
+    if (elapsed < 0) {
+      return { phase: "idle", charCount: 0, writeProgress: 0 };
+    }
+
+    if (elapsed <= line.duration) {
+      const raw = elapsed / line.duration;
+      const eased = 1 - (1 - raw) * (1 - raw);
+      const charCount = Math.max(0, Math.min(line.text.length, Math.floor(eased * line.text.length)));
+      return { phase: "writing", charCount, writeProgress: eased };
+    }
+
+    if (elapsed <= line.duration + line.hold) {
+      return { phase: "hold", charCount: line.text.length, writeProgress: 1 };
+    }
+
+    return { phase: "done", charCount: 0, writeProgress: 1 };
   };
 
-  const socialLinks = [
-    { label: 'Twitter', href: '#', icon: 'X' },
-    { label: 'GitHub', href: '#', icon: 'GH' },
-    { label: 'LinkedIn', href: '#', icon: 'in' },
-  ];
+  const lineStates = lines.map((line) => ({
+    line,
+    ...getLineProgress(line),
+  }));
+
+  const activeWritingIndex = lineStates.findIndex((state) => state.phase === "writing");
+
+  let penX = lines[0].startX;
+  let penY = lines[0].y;
+  let penOpacity = 0;
+  let penRotate = 18;
+
+  if (activeWritingIndex >= 0) {
+    const active = lineStates[activeWritingIndex];
+    penX = active.line.startX + active.writeProgress * active.line.track;
+    penY = active.line.y;
+    penOpacity = 1;
+    penRotate = 16 - Math.sin(active.writeProgress * Math.PI * 8) * 3;
+  } else {
+    const previousIndex = lineStates.findLastIndex((state) => state.phase === "hold");
+
+    if (previousIndex >= 0) {
+      const currentLine = lines[previousIndex];
+      const nextLine = lines[previousIndex + 1];
+      const holdStart = currentLine.start + currentLine.duration;
+      const moveStart = holdStart + currentLine.hold;
+      const moveEnd = nextLine ? nextLine.start : cycle;
+      const moveSpan = Math.max(0.001, moveEnd - moveStart);
+      const progress = Math.max(0, Math.min(1, (clock - moveStart) / moveSpan));
+
+      if (nextLine) {
+        const lift = Math.sin(progress * Math.PI) * 14;
+        penX = currentLine.startX + currentLine.track + (nextLine.startX - (currentLine.startX + currentLine.track)) * progress;
+        penY = currentLine.y + (nextLine.y - currentLine.y) * progress - lift;
+        penOpacity = 0.85;
+        penRotate = 22 - progress * 4;
+      } else {
+        const lift = Math.sin(progress * Math.PI) * 18;
+        penX = currentLine.startX + currentLine.track + (lines[0].startX - (currentLine.startX + currentLine.track)) * progress;
+        penY = currentLine.y + (lines[0].y - currentLine.y) * progress - lift;
+        penOpacity = 0.45 * (1 - progress);
+        penRotate = 24 - progress * 6;
+      }
+    }
+  }
 
   return (
-    <footer className="footer" role="contentinfo">
-      <div className="landing-container">
-        <div className="footer__top">
-          <div className="footer__brand">
-            <span className="landing-logo">
-              <span className="landing-logo__icon"><Sparkles size={16} /></span>
-              <span className="landing-logo__text">Lecture Assistant</span>
-            </span>
-            <p className="footer__tagline">
-              Transforming how students and educators engage with knowledge.
-            </p>
-            <div className="footer__socials">
-              {socialLinks.map((s) => (
-                <a key={s.label} href={s.href} aria-label={s.label} className="footer__social-link">{s.icon}</a>
-              ))}
-            </div>
-          </div>
+    <div className="relative h-[280px] w-full overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900/45 via-slate-900/55 to-slate-950/85">
+      <div className="absolute inset-4 rounded-xl border border-white/12 bg-slate-950/65 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)] backdrop-blur-lg">
+        <div className="absolute inset-x-6 top-[18%] border-t border-cyan-300/10" />
+        <div className="absolute inset-x-6 top-[42%] border-t border-cyan-300/10" />
+        <div className="absolute inset-x-6 top-[66%] border-t border-cyan-300/10" />
 
-          {Object.entries(footerLinks).map(([group, links]) => (
-            <div key={group} className="footer__col">
-              <h4 className="footer__col-heading">{group}</h4>
-              <ul className="footer__link-list" role="list">
-                {links.map((link) => (
-                  <li key={link}>
-                    <a href="#" className="footer__link">{link}</a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
+        {lineStates.map((state) => (
+          <p
+            key={state.line.text}
+            className="absolute left-7 whitespace-nowrap text-[1.05rem] font-medium tracking-[0.01em] text-cyan-100/90 [font-family:'Segoe_Script','Bradley_Hand','Comic_Sans_MS',cursive]"
+            style={{ top: `${state.line.y}px` }}
+          >
+            {state.line.text.slice(0, state.charCount)}
+          </p>
+        ))}
 
-        <div className="footer__bottom">
-          <p className="footer__copy">© {year} Lecture Assistant. All rights reserved.</p>
-          <p className="footer__made">Built for students everywhere.</p>
+        <div
+          className="absolute z-10"
+          style={{
+            left: `${penX}px`,
+            top: `${penY - 15}px`,
+            opacity: penOpacity,
+            transform: `rotate(${penRotate}deg)`,
+            transition: "transform 70ms linear, left 70ms linear, top 70ms linear, opacity 120ms ease",
+          }}
+        >
+          <motion.div
+            animate={{ rotate: [0, 1.6, -1.2, 1.1, -0.7, 0] }}
+            transition={{ duration: 0.24, repeat: Infinity, ease: "easeInOut" }}
+            className="relative"
+          >
+            <div className="h-7 w-4 rounded-full border border-amber-200/50 bg-gradient-to-b from-amber-200 to-amber-500 shadow-[0_2px_8px_rgba(251,191,36,0.35)]" />
+            <div className="absolute -top-3 left-[-1px] flex h-3 w-[18px] items-center justify-center rounded-full border border-slate-200/40 bg-slate-300/80">
+              <Pencil className="h-2.5 w-2.5 text-slate-900/85" />
+            </div>
+            <div className="absolute bottom-[-4px] left-[4px] h-2 w-2 rotate-45 bg-slate-200" />
+            <div className="absolute bottom-[-6px] left-[5px] h-1.5 w-1.5 rotate-45 bg-slate-900" />
+          </motion.div>
         </div>
       </div>
-    </footer>
-  );
-}
-
-/* ─────────────────────────────────────────────
-   LOADING SCREEN
-───────────────────────────────────────────── */
-function LoadingScreen() {
-  return (
-    <div className="loading-screen" role="status" aria-label="Loading">
-      <motion.div
-        className="loading-screen__inner"
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4 }}
-      >
-        <div className="loading-screen__logo">
-          <Sparkles size={28} />
-        </div>
-        <div className="loading-screen__spinner" />
-        <p className="loading-screen__text">Initializing...</p>
-      </motion.div>
     </div>
   );
 }
 
-/* ─────────────────────────────────────────────
-   MAIN EXPORT
-───────────────────────────────────────────── */
 export default function LandingPage() {
   const { user, loading } = useAuth();
   const [userCount, setUserCount] = useState(null);
 
   useEffect(() => {
-    api.get('/auth/stats')
+    api
+      .get("/auth/stats")
       .then((res) => setUserCount(res.data.user_count ?? 0))
       .catch(() => setUserCount(null));
   }, []);
 
-  if (loading) return <LoadingScreen />;
+  if (loading) {
+    return <div className="grid min-h-screen place-items-center text-sm text-muted-foreground">Preparing flagship experience...</div>;
+  }
 
   return (
-    <div className="landing-root">
-      <Navbar user={user} />
-      <HeroSection user={user} userCount={userCount} />
-      <FeaturesSection />
-      <HowItWorksSection />
-      <DemoSection />
-      <AboutSection userCount={userCount} />
-      <Footer />
+    <div className="premium-shell grain-overlay relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 -z-20 overflow-hidden">
+        <video
+          className="h-full w-full object-cover"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          aria-hidden="true"
+        >
+          <source src="https://videos.pexels.com/video-files/5532770/5532770-hd_1920_1080_30fps.mp4" type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-[linear-gradient(130deg,rgba(2,6,23,0.86),rgba(10,16,35,0.76)_35%,rgba(10,16,35,0.88))]" />
+      </div>
+
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute left-[-12rem] top-[-10rem] h-[30rem] w-[30rem] rounded-full bg-cyan-400/20 blur-[120px]" />
+        <div className="absolute right-[-8rem] top-[6rem] h-[28rem] w-[28rem] rounded-full bg-violet-500/20 blur-[120px]" />
+      </div>
+
+      <header className="relative border-b border-white/10 bg-background/30 backdrop-blur-2xl">
+        <div className="mx-auto flex h-16 max-w-[1320px] items-center justify-between px-4 sm:px-6">
+          <Link to="/" className="inline-flex items-center gap-2 font-semibold tracking-tight">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-cyan-500 to-violet-500 text-white shadow-lg shadow-cyan-500/20">
+              <Sparkles className="h-4 w-4" />
+            </span>
+            Lecture Assistant
+          </Link>
+
+          <div className="flex items-center gap-2">
+            {user ? (
+              <Button asChild className="rounded-full px-6">
+                <Link to="/workspace">
+                  Open Studio
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            ) : (
+              <>
+                <Button asChild variant="ghost" className="rounded-full">
+                  <Link to="/login">Sign in</Link>
+                </Button>
+                <Button asChild className="rounded-full px-6">
+                  <Link to="/register">Get started</Link>
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-[1320px] px-4 pb-24 pt-12 sm:px-6 lg:pt-20">
+        <motion.section variants={container} initial="hidden" animate="show" className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
+          <motion.div variants={item} className="space-y-7">
+            <Badge variant="secondary" className="rounded-full border border-cyan-300/40 bg-cyan-500/10 text-cyan-200 dark:text-cyan-300">
+              <Wand2 className="mr-1 h-3.5 w-3.5" />
+              Crafted for deep focus
+            </Badge>
+
+            <h1 className="max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl sm:leading-[1.05]">
+              A study product with
+              <span className="text-gradient"> cinematic clarity</span>
+              , not dashboard noise.
+            </h1>
+
+            <p className="max-w-xl text-base text-muted-foreground sm:text-lg">
+              Lecture Assistant feels like a premium creative tool. Capture audio, structure insights, resolve doubts,
+              and build revision assets in one fluid interface.
+            </p>
+
+            <div className="flex flex-wrap gap-3">
+              <Button asChild size="lg" className="rounded-full px-7">
+                <Link to={user ? "/workspace" : "/register"}>
+                  {user ? "Enter workspace" : "Launch your account"}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="rounded-full px-7">
+                <Link to="/login">
+                  <PlayCircle className="mr-2 h-4 w-4" />
+                  Experience product
+                </Link>
+              </Button>
+            </div>
+
+            <p className="text-sm text-muted-foreground">
+              Trusted by {userCount !== null ? `${userCount.toLocaleString()}+` : "hundreds of"} students and mentors.
+            </p>
+          </motion.div>
+
+          <motion.div variants={item} className="grid gap-4">
+            <Card className="glass-panel glow-ring overflow-hidden">
+              <CardContent className="relative p-0">
+                <HandwritingAnimation />
+              </CardContent>
+            </Card>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {statCards.map((stat, idx) => (
+                <motion.div key={stat.label} className={idx % 2 ? "float-up" : "float-down"}>
+                  <Card className="glass-panel h-full">
+                    <CardHeader className="space-y-1 pb-4">
+                      <CardDescription className="text-xs uppercase tracking-wider">{stat.label}</CardDescription>
+                      <CardTitle className="text-xl sm:text-2xl">{stat.value}</CardTitle>
+                    </CardHeader>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </motion.section>
+
+        <motion.section
+          variants={container}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "-120px" }}
+          className="mt-16 grid gap-5 md:grid-cols-3"
+        >
+          {features.map((feature) => {
+            const Icon = feature.icon;
+            return (
+              <motion.div key={feature.title} variants={item}>
+                <Card className="glass-panel group h-full overflow-hidden">
+                  <CardHeader>
+                    <div className="mb-2 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500/25 to-violet-500/25 text-cyan-300 transition-transform duration-300 group-hover:scale-110">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <CardTitle className="text-xl">{feature.title}</CardTitle>
+                    <CardDescription>{feature.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button variant="ghost" className="p-0 text-cyan-300 hover:bg-transparent hover:text-cyan-200">
+                      Explore capability
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          })}
+        </motion.section>
+      </main>
     </div>
   );
 }

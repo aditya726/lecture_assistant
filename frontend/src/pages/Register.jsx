@@ -1,163 +1,126 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
-import { useToast } from '../components/ui/toast'
-import { Button } from '../components/ui/button'
-import { Input } from '../components/ui/input'
-import GlassCard from '../components/ui/GlassCard'
-import { motion } from 'framer-motion'
-import { UserPlus, Mail, Lock, User, Chrome } from 'lucide-react'
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Chrome, Loader2, Lock, Mail, UserRound } from "lucide-react";
+import { toast } from "sonner";
+
+import AuthShell from "../components/AuthShell";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Register() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [fullName, setFullName] = useState('')
-  const [loading, setLoading] = useState(false)
-  const { register, loginWithGoogle } = useAuth()
-  const { toast } = useToast()
-  const navigate = useNavigate()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const { register, loginWithGoogle } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
     try {
-      await register(email, password, fullName)
-      toast({
-        title: "Success!",
-        description: "Account created successfully. Please login.",
-      })
-      navigate('/login')
+      await register(email, password, fullName);
+      toast.success("Account created", { description: "Sign in with your new credentials." });
+      navigate("/login");
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.response?.data?.detail || "Failed to create account",
-      })
+      toast.error("Unable to create account", {
+        description: error.response?.data?.detail || "Please review your details and try again.",
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleGoogleLogin = async () => {
     try {
-      await loginWithGoogle()
+      await loginWithGoogle();
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to initiate Google login",
-      })
+      toast.error("Google sign-up failed", { description: "Please retry in a moment." });
     }
-  }
+  };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#111315]">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-24 -left-24 h-80 w-80 rounded-full bg-[#d97757]/15 blur-3xl" />
-        <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-[#7ea389]/10 blur-3xl" />
-      </div>
-      <main className="relative flex items-center justify-center px-6 py-16">
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-md">
-          <GlassCard className="p-8">
-            <div className="flex items-center justify-center mb-4">
-              <div className="rounded-full border border-white/15 bg-white/5 p-3">
-                <UserPlus className="w-6 h-6 text-[#f0b39e]" />
-              </div>
-            </div>
-            <h1 className="text-2xl text-center font-bold text-[#f4f1ed]">Create Account</h1>
-            <p className="text-center text-[#ece3dc]/80 mt-1">Enter your details to get started</p>
+    <AuthShell
+      title="Create your account"
+      subtitle="Start turning lecture recordings into structured notes."
+      footer={
+        <>
+          Already have an account?{" "}
+          <Link to="/login" className="font-medium text-foreground hover:text-primary">
+            Sign in
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="fullName">Full name</Label>
+          <div className="relative">
+            <UserRound className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="fullName"
+              type="text"
+              className="pl-9"
+              placeholder="Ada Lovelace"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required
+            />
+          </div>
+        </div>
 
-            <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[#ece3dc]/85" htmlFor="fullName">
-                  Full Name
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-[#d0c2b7]/70" />
-                  <Input
-                    id="fullName"
-                    type="text"
-                    placeholder="John Doe"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="pl-10 rounded-lg border border-white/15 bg-white/5 text-[#f4f1ed] placeholder-[#d0c2b7]/65 focus:ring-2 focus:ring-[#d97757]/35"
-                    required
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[#ece3dc]/85" htmlFor="email">
-                  Email
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-[#d0c2b7]/70" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10 rounded-lg border border-white/15 bg-white/5 text-[#f4f1ed] placeholder-[#d0c2b7]/65 focus:ring-2 focus:ring-[#d97757]/35"
-                    required
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[#ece3dc]/85" htmlFor="password">
-                  Password
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-[#d0c2b7]/70" />
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="********"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 rounded-lg border border-white/15 bg-white/5 text-[#f4f1ed] placeholder-[#d0c2b7]/65 focus:ring-2 focus:ring-[#d97757]/35"
-                    required
-                    minLength={8}
-                  />
-                </div>
-                <p className="text-xs text-[#d0c2b7]/75">Must be at least 8 characters</p>
-              </div>
-              <Button
-                type="submit"
-                className="w-full rounded-xl bg-[#d97757] text-white hover:bg-[#bf6548]"
-                disabled={loading}
-              >
-                {loading ? "Creating account..." : "Create Account"}
-              </Button>
-            </form>
+        <div className="space-y-2">
+          <Label htmlFor="email">Email address</Label>
+          <div className="relative">
+            <Mail className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="email"
+              type="email"
+              className="pl-9"
+              placeholder="you@company.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+        </div>
 
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-white/10" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-transparent px-2 text-[#d0c2b7]/70">Or continue with</span>
-              </div>
-            </div>
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <div className="relative">
+            <Lock className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="password"
+              type="password"
+              className="pl-9"
+              placeholder="At least 8 characters"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={8}
+            />
+          </div>
+        </div>
 
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full rounded-xl border border-white/15 bg-white/5 text-[#f4f1ed] hover:bg-white/10"
-              onClick={handleGoogleLogin}
-            >
-              <Chrome className="mr-2 h-4 w-4" />
-              Sign up with Google
-            </Button>
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creating account...
+            </>
+          ) : (
+            "Create account"
+          )}
+        </Button>
 
-            <div className="mt-6 text-sm text-center text-[#ece3dc]/80">
-              Already have an account?{' '}
-              <Link to="/login" className="text-[#f0b39e] hover:underline font-medium">
-                Sign in
-              </Link>
-            </div>
-          </GlassCard>
-        </motion.div>
-      </main>
-    </div>
-  )
+        <Button type="button" variant="outline" className="w-full" onClick={handleGoogleLogin}>
+          <Chrome className="mr-2 h-4 w-4" />
+          Continue with Google
+        </Button>
+      </form>
+    </AuthShell>
+  );
 }

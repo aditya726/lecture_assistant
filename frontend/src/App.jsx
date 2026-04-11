@@ -10,6 +10,8 @@ import Register from './pages/Register';
 import GoogleCallback from './pages/GoogleCallback';
 import LandingPage from './pages/LandingPage';
 import Scanner from './pages/Scanner';
+import { Toaster } from 'sonner';
+
 function App() {
   return (
     <Router>
@@ -26,6 +28,7 @@ function App() {
               <Route path="/scanner" element={<ProtectedRoute><Scanner /></ProtectedRoute>} />
             </Routes>
           </Layout>
+          <Toaster richColors position="top-right" />
         </AuthProvider>
       </ThemeProvider>
     </Router>

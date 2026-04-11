@@ -1,9 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
-import api from '../services/api';
-import StickyNote from '../components/ui/StickyNote';
-import { Loader2, BookOpen, X, Sparkles, Layers } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import '../workspace.css';
+import { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
+import { BookOpen, Loader2, Sparkles, StickyNote as StickyNoteIcon } from "lucide-react";
+
+import api from "../services/api";
+import StickyNote from "../components/ui/StickyNote";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
+import { Textarea } from "../components/ui/textarea";
+
+const reveal = {
+  hidden: { opacity: 0, y: 14 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] } },
+};
 
 export default function Notes() {
   const [loading, setLoading] = useState(true);
@@ -20,224 +28,162 @@ export default function Notes() {
 
   const fetchNotes = async () => {
     try {
-      const res = await api.get('/sessions/');
+      const res = await api.get("/sessions/");
       const sessions = res.data;
-      
       const extractedNotes = [];
-      let globalIndex = 0;
 
-      sessions.forEach(session => {
-        if (!session.key_points || session.key_points.length === 0) return;
-        
-        const sessionDate = new Date(session.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      sessions.forEach((session) => {
+        if (!session.key_points?.length) return;
 
-        if (session.key_points && session.key_points.length > 0) {
-           const combinedKp = session.key_points.map(kp => `- ${kp}`).join('\n\n');
-           extractedNotes.push({
-              id: `kp-${session._id}`,
-              sessionId: session._id,
-              sessionObj: session,
-              type: 'key_point_group',
-              index: null,
-              title: `${session.title || 'Untitled'} (${sessionDate})`,
-              content: combinedKp,
-              colorIndex: globalIndex++
-           });
-        }
+        const sessionDate = new Date(session.created_at).toLocaleDateString(undefined, {
+          month: "short",
+          day: "numeric",
+        });
+
+        const combinedKp = session.key_points.map((kp) => `- ${kp}`).join("\n\n");
+        extractedNotes.push({
+          id: `kp-${session._id}`,
+          sessionId: session._id,
+          sessionObj: session,
+          title: `${session.title || "Untitled"} (${sessionDate})`,
+          content: combinedKp,
+        });
       });
-      
+
       setFlattenedNotes(extractedNotes);
     } catch (err) {
-      setError("Failed to load notes. " + (err.response?.data?.detail || err.message));
+      setError(`Failed to load notes. ${err.response?.data?.detail || err.message}`);
     } finally {
       setLoading(false);
     }
   };
 
   const syncToApi = async (sessionId, sessionObj) => {
-     try {
-       const payload = {
-         title: sessionObj.title,
-         transcript: sessionObj.transcript,
-         summary: sessionObj.summary,
-         key_points: sessionObj.key_points,
-         tags: sessionObj.tags || {},
-         related_resources: sessionObj.related_resources || []
-       };
-       await api.put(`/sessions/${sessionId}`, payload);
-     } catch (err) {
-       console.error("Failed to sync note update to backend", err);
-     }
+    try {
+      const payload = {
+        title: sessionObj.title,
+        transcript: sessionObj.transcript,
+        summary: sessionObj.summary,
+        key_points: sessionObj.key_points,
+        tags: sessionObj.tags || {},
+        related_resources: sessionObj.related_resources || [],
+      };
+      await api.put(`/sessions/${sessionId}`, payload);
+    } catch (err) {
+      console.error("Failed to sync note update", err);
+    }
   };
 
   const debouncedSync = (sessionId, sessionObj) => {
-     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-     saveTimeoutRef.current = setTimeout(() => {
-        syncToApi(sessionId, sessionObj);
-     }, 1500);
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => syncToApi(sessionId, sessionObj), 1200);
   };
 
   const handleNoteChange = (noteId, newContent) => {
-     setFlattenedNotes(prev => {
-        const next = [...prev];
-        const noteIndex = next.findIndex(n => n.id === noteId);
-        if (noteIndex === -1) return prev;
-        
-        const note = next[noteIndex];
-        note.content = newContent;
-        
-        if (note.type === 'summary') {
-           note.sessionObj.summary = newContent;
-        } else {
-           note.sessionObj.key_points = newContent
-              .split('\n')
-              .map(line => line.replace(/^[\-•]\s*/, '').trim())
-              .filter(line => line.length > 0);
-        }
+    setFlattenedNotes((prev) => {
+      const next = [...prev];
+      const noteIndex = next.findIndex((note) => note.id === noteId);
+      if (noteIndex === -1) return prev;
 
-        debouncedSync(note.sessionId, note.sessionObj);
+      const note = next[noteIndex];
+      note.content = newContent;
+      note.sessionObj.key_points = newContent
+        .split("\n")
+        .map((line) => line.replace(/^[\-•]\s*/, "").trim())
+        .filter((line) => line.length > 0);
 
-        return next;
-     });
+      debouncedSync(note.sessionId, note.sessionObj);
+      return next;
+    });
   };
 
   if (loading) {
     return (
-      <div className="workspace-layout flex h-[calc(100vh-56px)] items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 animate-spin text-[#d97757] opacity-80" />
-          <p className="text-sm font-medium text-muted-foreground animate-pulse">Loading notes...</p>
-        </div>
-      </div>
+      <Card className="glass-panel">
+        <CardContent className="flex items-center gap-2 p-6 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Loading notes board...
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="workspace-layout overflow-y-auto w-full h-[calc(100vh-56px)] custom-scrollbar pb-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-8 py-10 h-full flex flex-col">
-        
-        {/* Header Section */}
-        <motion.div 
-          initial={{ opacity: 0, y: -10 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          className="mb-8 shrink-0"
-        >
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-3">
-             <div className="bg-[#d97757]/12 p-2.5 rounded-xl border border-[#d97757]/28">
-               <Layers className="w-7 h-7 text-[#f0b39e]" /> 
-             </div>
-             Knowledge Board
-          </h1>
-          <p className="text-muted-foreground mt-2 font-medium max-w-2xl">
-            A unified collection of key insights and summaries extracted from all your past sessions. Drag to organize, edit freely, and review seamlessly.
-          </p>
-        </motion.div>
-        
-        {error && (
-           <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="p-4 rounded-xl bg-red-500/10 text-red-400 text-sm mb-6 border border-red-500/20 font-medium flex items-center gap-3"
-           >
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-              {error}
-           </motion.div>
-        )}
+    <div className="premium-shell space-y-4">
+      <motion.div variants={reveal} initial="hidden" animate="show">
+        <Card className="glass-panel overflow-hidden">
+          <CardHeader className="relative">
+            <div className="pointer-events-none absolute right-0 top-0 h-24 w-24 rounded-full bg-violet-500/20 blur-2xl" />
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <StickyNoteIcon className="h-5 w-5 text-violet-300" />
+              Knowledge Board
+            </CardTitle>
+            <CardDescription>Curate and edit key insights from every lecture session in one premium canvas.</CardDescription>
+          </CardHeader>
+        </Card>
+      </motion.div>
 
-        {/* Board Area */}
-        <div ref={boardRef} className="flex-1 relative">
-           {flattenedNotes.length === 0 ? (
-             <motion.div 
-               initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-               className="h-full flex flex-col items-center justify-center text-muted-foreground/50 mt-10"
-             >
-               <div className="w-24 h-24 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-center mb-6 shadow-2xl">
-                 <BookOpen className="w-10 h-10 opacity-30" />
-               </div>
-               <p className="text-xl font-semibold text-foreground/70">Your board is empty</p>
-               <p className="mt-2 text-sm font-medium">Process a lecture in your Workspace to generate smart sticky notes.</p>
-             </motion.div>
-           ) : (
-             <motion.div 
-               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 content-start"
-               initial="hidden" animate="visible"
-               variants={{ visible: { transition: { staggerChildren: 0.05 } } }}
-             >
-                {flattenedNotes.map((note, index) => (
-                  <motion.div 
-                    key={note.id}
-                    variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
-                    drag
-                    dragConstraints={boardRef}
-                    dragElastic={0.1}
-                    dragMomentum={false}
-                    whileDrag={{ scale: 1.05, zIndex: 50 }}
-                    style={{ zIndex: 10 + index }}
-                    className="w-full h-[280px] cursor-grab active:cursor-grabbing relative"
-                  >
-                    <StickyNote 
-                      title={note.title}
-                      value={note.content}
-                      onChange={(val) => handleNoteChange(note.id, val)}
-                      colorIndex={note.colorIndex}
-                      onExpand={() => setExpandedNote(note)}
-                    />
-                  </motion.div>
-                ))}
-             </motion.div>
-           )}
-        </div>
+      {error && (
+        <Card className="border-destructive/40 bg-destructive/10">
+          <CardContent className="p-3 text-sm text-destructive">{error}</CardContent>
+        </Card>
+      )}
 
-        {/* Expanded Note Modal */}
-        <AnimatePresence>
-          {expandedNote && (
-            <motion.div 
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-md"
+      <motion.div
+        ref={boardRef}
+        variants={reveal}
+        initial="hidden"
+        animate="show"
+        transition={{ delay: 0.05 }}
+        className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
+      >
+        {flattenedNotes.length === 0 ? (
+          <Card className="glass-panel col-span-full">
+            <CardContent className="grid place-items-center gap-2 py-16 text-center text-muted-foreground">
+              <BookOpen className="h-8 w-8" />
+              <p>Your board is empty. Process a lecture to generate note cards.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          flattenedNotes.map((note, idx) => (
+            <motion.div
+              key={note.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: idx * 0.03 }}
+              className={idx % 2 === 0 ? "float-up" : "float-down"}
             >
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                className="w-full max-w-4xl h-[85vh] bg-[#181b21] rounded-[32px] shadow-2xl flex flex-col overflow-hidden border border-white/10 relative"
-              >
-                {/* Decorative glow inside modal */}
-                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#d97757]/10 rounded-full blur-[100px] pointer-events-none" />
-
-                <div className="flex items-center justify-between p-6 border-b border-white/5 bg-white/[0.02] relative z-10">
-                   <div className="flex items-center gap-3">
-                     <div className="bg-[#d97757]/20 p-2 rounded-xl">
-                       <Sparkles className="w-5 h-5 text-[#f0b39e]" />
-                     </div>
-                     <h2 className="font-bold text-lg text-[#f4f1ed] tracking-wide">{expandedNote.title}</h2>
-                   </div>
-                   <button 
-                     onClick={() => setExpandedNote(null)} 
-                     className="p-2.5 rounded-xl bg-white/5 hover:bg-red-500/20 text-muted-foreground hover:text-red-400 border border-white/5 transition-all"
-                   >
-                      <X className="w-5 h-5" />
-                   </button>
-                </div>
-
-                <div className="flex-1 p-8 relative z-10">
-                  <textarea
-                    value={expandedNote.content}
-                    onChange={(e) => {
-                       const val = e.target.value;
-                       setExpandedNote(prev => ({...prev, content: val}));
-                       handleNoteChange(expandedNote.id, val);
-                    }}
-                    className="w-full h-full bg-transparent border-none outline-none resize-none custom-scrollbar text-[18px] leading-[1.8] font-medium placeholder:text-white/20 text-[#ece3dc]/90"
-                    spellCheck="false"
-                    placeholder="Empty note..."
-                  />
-                </div>
-              </motion.div>
+              <StickyNote
+                title={note.title}
+                value={note.content}
+                onChange={(value) => handleNoteChange(note.id, value)}
+                onExpand={() => setExpandedNote(note)}
+              />
             </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+          ))
+        )}
+      </motion.div>
+
+      <Dialog open={!!expandedNote} onOpenChange={(open) => !open && setExpandedNote(null)}>
+        <DialogContent className="glass-panel max-w-4xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-cyan-300" />
+              {expandedNote?.title}
+            </DialogTitle>
+          </DialogHeader>
+          <Textarea
+            value={expandedNote?.content || ""}
+            onChange={(e) => {
+              const value = e.target.value;
+              setExpandedNote((prev) => (prev ? { ...prev, content: value } : prev));
+              if (expandedNote) handleNoteChange(expandedNote.id, value);
+            }}
+            className="custom-scrollbar min-h-[60vh] resize-none"
+            placeholder="Empty note"
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

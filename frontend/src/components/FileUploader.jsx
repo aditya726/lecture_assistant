@@ -1,33 +1,23 @@
-import { useState, useRef } from 'react';
-import { Upload, File, X, Loader2, FileText, Image, Video } from 'lucide-react';
-import api from '../services/api';
+import { useRef, useState } from "react";
+import { File, FileText, Image, Loader2, Upload, Video, X } from "lucide-react";
+
+import api from "../services/api";
+import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
+import { Card } from "./ui/card";
+import { cn } from "../lib/utils";
 
 const DEFAULT_TASKS = [
-  {
-    value: 'summarization',
-    label: 'Summarize',
-    className:
-      'px-4 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm border border-input',
-  },
-  {
-    value: 'topic_extraction',
-    label: 'Extract Topics',
-    className:
-      'px-4 py-2 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 text-sm border border-input',
-  },
-  {
-    value: 'keyword_extraction',
-    label: 'Extract Keywords',
-    className:
-      'px-4 py-2 rounded-xl bg-secondary text-secondary-foreground hover:bg-secondary/90 text-sm border border-input',
-  },
+  { value: "summarization", label: "Summarize" },
+  { value: "topic_extraction", label: "Extract Topics" },
+  { value: "keyword_extraction", label: "Extract Keywords" },
 ];
 
 export default function FileUploader({
   onFileProcessed,
   onError,
-  acceptedTypes = 'all',
-  endpointPath = '/ai/upload-file',
+  acceptedTypes = "all",
+  endpointPath = "/ai/upload-file",
   tasks = DEFAULT_TASKS,
 }) {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -51,82 +41,48 @@ export default function FileUploader({
   };
 
   const getFileIcon = (fileName) => {
-    const ext = fileName.split('.').pop().toLowerCase();
-    if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(ext)) {
-      return <Image className="w-5 h-5" />;
-    } else if (['mp4', 'avi', 'mov', 'mkv', 'webm'].includes(ext)) {
-      return <Video className="w-5 h-5" />;
-    } else if (['pdf', 'docx', 'txt'].includes(ext)) {
-      return <FileText className="w-5 h-5" />;
-    }
-    return <File className="w-5 h-5" />;
+    const ext = fileName.split(".").pop()?.toLowerCase();
+    if (["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(ext)) return Image;
+    if (["mp4", "avi", "mov", "mkv", "webm"].includes(ext)) return Video;
+    if (["pdf", "docx", "txt"].includes(ext)) return FileText;
+    return File;
   };
 
   const handleFileSelect = (file) => {
-    if (file) {
-      setSelectedFile(file);
-    }
+    if (file) setSelectedFile(file);
   };
 
   const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
+    if (e.type === "dragenter" || e.type === "dragover") setDragActive(true);
+    if (e.type === "dragleave") setDragActive(false);
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFileSelect(e.dataTransfer.files[0]);
-    }
+    if (e.dataTransfer.files?.[0]) handleFileSelect(e.dataTransfer.files[0]);
   };
 
-  const handleChange = (e) => {
-    e.preventDefault();
-    if (e.target.files && e.target.files[0]) {
-      handleFileSelect(e.target.files[0]);
-    }
-  };
-
-  const uploadFile = async (task = 'summarization') => {
+  const uploadFile = async (task = "summarization") => {
     if (!selectedFile) return;
-
     setIsUploading(true);
-    try {
-      const resolvedEndpointPath =
-        typeof endpointPath === 'function' ? endpointPath(selectedFile) : endpointPath;
 
+    try {
+      const resolvedEndpointPath = typeof endpointPath === "function" ? endpointPath(selectedFile) : endpointPath;
       const formData = new FormData();
-      formData.append('file', selectedFile);
-      formData.append('task', task);
+      formData.append("file", selectedFile);
+      formData.append("task", task);
 
       const response = await api.post(resolvedEndpointPath, formData);
-
-      const data = response.data;
-      
-      if (onFileProcessed) {
-        onFileProcessed(data);
-      }
-
-      // Clear selection after successful upload
+      onFileProcessed?.(response.data);
       setSelectedFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (error) {
-      console.error('Upload error:', error);
-      const detail =
-        error?.response?.data?.detail ||
-        error?.response?.data?.message ||
-        error?.message;
-      if (onError) onError(detail ? String(detail) : 'Failed to upload file. Please try again.');
+      const detail = error?.response?.data?.detail || error?.response?.data?.message || error?.message;
+      onError?.(detail ? String(detail) : "Failed to upload file. Please try again.");
     } finally {
       setIsUploading(false);
     }
@@ -134,97 +90,77 @@ export default function FileUploader({
 
   const removeFile = () => {
     setSelectedFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const FileIcon = selectedFile ? getFileIcon(selectedFile.name) : Upload;
+
   return (
-    <div className="w-full">
-      {/* Drag and Drop Zone */}
-      <div
-        className={`relative rounded-2xl p-6 text-center transition-colors border ${
-          dragActive 
-            ? 'border-primary/40 bg-primary/10' 
-            : 'border-input bg-card hover:bg-card/80'
-        } backdrop-blur`}
-        onDragEnter={handleDrag}
-        onDragLeave={handleDrag}
-        onDragOver={handleDrag}
-        onDrop={handleDrop}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          className="hidden"
-          accept={getAcceptString()}
-          onChange={handleChange}
-          disabled={isUploading}
-        />
+    <Card
+      className={cn(
+        "border-dashed p-6 transition-colors",
+        dragActive ? "border-primary bg-primary/5" : "border-border"
+      )}
+      onDragEnter={handleDrag}
+      onDragLeave={handleDrag}
+      onDragOver={handleDrag}
+      onDrop={handleDrop}
+    >
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        accept={getAcceptString()}
+        onChange={(e) => handleFileSelect(e.target.files?.[0])}
+        disabled={isUploading}
+      />
 
-        {!selectedFile ? (
-          <div className="space-y-2">
-            <Upload className="w-12 h-12 mx-auto text-muted-foreground" />
-            <div>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="text-primary hover:text-primary/80 font-medium"
-                disabled={isUploading}
-              >
-                Choose a file
-              </button>
-              <span className="text-muted-foreground"> or drag and drop</span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              PDF, DOCX, TXT, Images, Videos (max 50MB)
-            </p>
+      {!selectedFile ? (
+        <div className="space-y-4 text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+            <FileIcon className="h-5 w-5 text-muted-foreground" />
           </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="flex items-center justify-center gap-3 bg-card border border-input backdrop-blur rounded-xl p-3 text-foreground">
-              <div className="text-primary">
-                {getFileIcon(selectedFile.name)}
-              </div>
-              <div className="flex-1 text-left">
-                <p className="text-sm font-medium truncate">
-                  {selectedFile.name}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                </p>
-              </div>
-              {!isUploading && (
-                <button
-                  onClick={removeFile}
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              )}
+          <div className="space-y-1">
+            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+              Choose file
+            </Button>
+            <p className="text-sm text-muted-foreground">or drag and drop your document, image, audio, or video file</p>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 rounded-lg border bg-background p-3">
+            <div className="rounded-md bg-muted p-2">
+              <FileIcon className="h-4 w-4 text-muted-foreground" />
             </div>
-
-            {!isUploading ? (
-              <div className="flex gap-2 justify-center flex-wrap">
-                {(tasks || DEFAULT_TASKS).map((t) => (
-                  <button
-                    key={t.value}
-                    onClick={() => uploadFile(t.value)}
-                    className={t.className}
-                  >
-                    {t.label}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className="flex items-center justify-center gap-2 text-foreground dark:text-white/80">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span className="text-sm">Processing...</span>
-              </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{selectedFile.name}</p>
+              <p className="text-xs text-muted-foreground">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+            </div>
+            {!isUploading && (
+              <Button size="icon" variant="ghost" onClick={removeFile} aria-label="Remove file">
+                <X className="h-4 w-4" />
+              </Button>
             )}
           </div>
-        )}
-      </div>
-    </div>
+
+          {!isUploading ? (
+            <div className="flex flex-wrap gap-2">
+              {(tasks || DEFAULT_TASKS).map((task) => (
+                <Button key={task.value} type="button" variant="secondary" onClick={() => uploadFile(task.value)}>
+                  {task.label}
+                </Button>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Processing file...
+              <Badge variant="outline">AI</Badge>
+            </div>
+          )}
+        </div>
+      )}
+    </Card>
   );
 }

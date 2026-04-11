@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('access_token', response.data.access_token)
     localStorage.setItem('refresh_token', response.data.refresh_token)
     await checkAuth()
-    navigate('/')
+    navigate('/workspace')
     return response.data
   }
 
@@ -55,7 +55,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('access_token', response.data.access_token)
     localStorage.setItem('refresh_token', response.data.refresh_token)
     await checkAuth()
-    navigate('/')
+    navigate('/workspace')
     return response.data
   }
 
