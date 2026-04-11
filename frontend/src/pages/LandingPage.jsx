@@ -301,7 +301,7 @@ export default function LandingPage() {
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="rounded-full px-7">
-                <Link to="/login">
+                <Link to={user ? "/workspace" : "/login"}>
                   <PlayCircle className="mr-2 h-4 w-4" />
                   Experience product
                 </Link>
