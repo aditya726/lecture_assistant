@@ -44,36 +44,39 @@ const item = {
 };
 
 function HandwritingAnimation() {
-  const cycle = 15;
+  const cycle = 11.8;
   const lines = [
     {
       text: "Capturing lectures in real time.",
       y: 56,
       startX: 30,
-      track: 394,
-      start: 0.6,
-      duration: 3.2,
-      hold: 0.65,
+      start: 0,
+      duration: 2.7,
+      hold: 0.3,
     },
     {
       text: "Structuring insights as complete notes.",
       y: 122,
       startX: 30,
-      track: 426,
-      start: 4.7,
-      duration: 3.35,
-      hold: 0.65,
+      start: 3.2,
+      duration: 2.8,
+      hold: 0.3,
     },
     {
       text: "Resolving doubts with context.",
       y: 188,
       startX: 30,
-      track: 366,
-      start: 8.95,
-      duration: 2.95,
-      hold: 0.7,
+      start: 6.6,
+      duration: 2.5,
+      hold: 0.25,
     },
   ];
+
+  const measuredLines = lines.map((line) => ({
+    ...line,
+    // Approximate handwriting advance so pen tip ends near the final character.
+    track: Math.max(180, Math.min(420, line.text.length * 9.6)),
+  }));
 
   const [clock, setClock] = useState(0);
 
@@ -112,15 +115,15 @@ function HandwritingAnimation() {
     return { phase: "done", charCount: 0, writeProgress: 1 };
   };
 
-  const lineStates = lines.map((line) => ({
+  const lineStates = measuredLines.map((line) => ({
     line,
     ...getLineProgress(line),
   }));
 
   const activeWritingIndex = lineStates.findIndex((state) => state.phase === "writing");
 
-  let penX = lines[0].startX;
-  let penY = lines[0].y;
+  let penX = measuredLines[0].startX;
+  let penY = measuredLines[0].y;
   let penOpacity = 0;
   let penRotate = 18;
 
@@ -134,8 +137,8 @@ function HandwritingAnimation() {
     const previousIndex = lineStates.findLastIndex((state) => state.phase === "hold");
 
     if (previousIndex >= 0) {
-      const currentLine = lines[previousIndex];
-      const nextLine = lines[previousIndex + 1];
+      const currentLine = measuredLines[previousIndex];
+      const nextLine = measuredLines[previousIndex + 1];
       const holdStart = currentLine.start + currentLine.duration;
       const moveStart = holdStart + currentLine.hold;
       const moveEnd = nextLine ? nextLine.start : cycle;
@@ -150,8 +153,8 @@ function HandwritingAnimation() {
         penRotate = 22 - progress * 4;
       } else {
         const lift = Math.sin(progress * Math.PI) * 18;
-        penX = currentLine.startX + currentLine.track + (lines[0].startX - (currentLine.startX + currentLine.track)) * progress;
-        penY = currentLine.y + (lines[0].y - currentLine.y) * progress - lift;
+        penX = currentLine.startX + currentLine.track + (measuredLines[0].startX - (currentLine.startX + currentLine.track)) * progress;
+        penY = currentLine.y + (measuredLines[0].y - currentLine.y) * progress - lift;
         penOpacity = 0.45 * (1 - progress);
         penRotate = 24 - progress * 6;
       }
@@ -215,7 +218,7 @@ export default function LandingPage() {
   }, []);
 
   if (loading) {
-    return <div className="grid min-h-screen place-items-center text-sm text-muted-foreground">Preparing flagship experience...</div>;
+    return <div className="grid min-h-screen place-items-center text-sm text-muted-foreground">Preparing your workspace experience...</div>;
   }
 
   return (

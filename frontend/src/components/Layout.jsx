@@ -111,7 +111,7 @@ export default function Layout({ children }) {
           <DesktopNav pathname={location.pathname} />
 
           <div className="ml-auto flex items-center gap-2">
-            <Badge className="hidden rounded-full bg-violet-500/80 text-white sm:inline-flex">Flagship</Badge>
+            <Badge className="hidden rounded-full bg-violet-500/80 text-white sm:inline-flex">Premium</Badge>
             <Button
               variant="outline"
               size="icon"
