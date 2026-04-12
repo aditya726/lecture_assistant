@@ -2,56 +2,49 @@
 
 Tutor Lab is a full-stack web app that turns lecture audio (recorded live or uploaded) into structured notes, then links the lecture to relevant learning resources using a lightweight RAG-style retrieval pipeline.
 
-## What’s implemented
+## Current implementation
 
-### Frontend (user-facing)
-- **Authentication UI**
-  - Email + password registration and login
-  - Google OAuth login (redirect-based)
-  - Persistent session using JWT access/refresh tokens stored in `localStorage`
-- **Workspace (lecture processing)**
-  - Record audio from the microphone and auto-transcribe (after recording stops)
-  - Upload an audio file and transcribe
-  - Generate:
-    - A summary
-    - Editable key points
-    - Auto tags (`subject`, `topic`, `difficulty`)
-  - **“Doubt Now”**: select/highlight text and request an AI explanation using the lecture transcript as context
-  - **Session history sidebar**: create, load, rename, and delete saved sessions
-- **Notes board**
-  - Aggregates key points from past sessions
-  - Draggable sticky notes
-  - Inline editing with debounced sync back to the backend
+### Frontend
+- Authentication
+  - Email/password register and login
+  - Google OAuth callback flow
+  - Access/refresh token handling with auto-refresh support
+- Landing + protected app routes
+  - Public landing page at `/`
+  - Protected routes: `/workspace`, `/notes`, `/scanner`
+- Workspace (lecture studio)
+  - Live mic recording + transcription
+  - Audio upload + transcription
+  - AI lecture processing: summary, key points, tags, related resources
+  - Session timeline sidebar: create, load, rename, delete
+  - "Doubt Now" flow: highlight text and get contextual explanation
+- Notes board
+  - Aggregated key points from saved sessions
+  - Sticky-note style cards with inline editing
+  - Debounced persistence to backend sessions API
+- Smart Scanner
+  - Upload images/docs/media through a unified uploader
+  - OCR/file text extraction + AI summary/key points
 
-### Backend (APIs)
-- **Auth & users**
-  - Email/password register + login
-  - JWT access + refresh tokens
-  - `GET /auth/me` for current user
-  - Google OAuth flow that redirects back to the frontend with tokens
-- **Lecture AI utilities**
-  - Lecture transcript processing in one call (summary, key points, tags, related resource queries)
-  - Summarization, topic extraction, keyword extraction, difficulty classification
-  - Doubt explanation (with optional context)
-- **Audio transcription**
-  - Whisper-based audio transcription via file upload or base64
-- **File processing**
-  - PDF/DOCX/TXT text extraction
-  - Image OCR using rapidocr
-  - Upload endpoint that optionally runs AI analysis on extracted text
-- **Sessions storage**
-  - CRUD for lecture sessions (per-user)
-  - Stores transcript, summary, key points, tags, and related resources
-- **Resource recommendations (retrieval)**
-  - Semantic + lexical retrieval for resources using:
-    - Sentence-transformer embeddings
-    - FAISS vector index
-    - BM25 index
-    - Cross-encoder re-ranking
-  - Optional ingestion to populate resources from:
-    - YouTube
-    - Google Books
-    - arXiv
+### Backend
+- Auth and users
+  - Email/password register/login
+  - OAuth2-compatible `/auth/token` endpoint for docs login
+  - Access/refresh JWT issuance and refresh
+  - Google OAuth URL + callback
+  - Current-user and public stats endpoints
+- AI endpoints
+  - General generate/chat endpoints
+  - Unified lecture processing endpoint
+  - Task-specific analysis endpoints (summary, topics, keywords, difficulty, doubt explanation)
+  - Audio transcription (file and base64)
+  - File upload and OCR analysis endpoints
+  - Draft notes and micronotes expansion/listing
+- Sessions
+  - Per-user CRUD for lecture sessions in MongoDB
+- Recommendations
+  - Retrieval from vector/lexical index
+  - Optional ingestion from YouTube, Google Books, arXiv
 
 ## Tech stack / tools used
 
@@ -63,6 +56,7 @@ Tutor Lab is a full-stack web app that turns lecture audio (recorded live or upl
 - UI helpers:
   - `lucide-react` icons
   - `framer-motion` animations
+  - `@radix-ui/*` primitives
   - `react-markdown` + `remark-gfm` for Markdown rendering
   - `sonner` toast notifications
 
@@ -80,12 +74,38 @@ Tutor Lab is a full-stack web app that turns lecture audio (recorded live or upl
   - `numpy`
 - **OCR / document processing**
   - `rapidocr-onnxruntime`
-  - `Pillow`, `opencv-python`, `PyPDF2`, `pdf2image`, `python-docx`
+  - `Pillow`, `opencv-python`, `PyPDF2`, `pdf2image`, `python-docx`, `aiofiles`
 
 ## Repository layout
 
-- `backend/` — FastAPI app, DB connections, AI + retrieval services
-- `frontend/` — React app (Vite + Tailwind)
+```text
+.
+|-- backend/
+|   |-- app/
+|   |   |-- api/
+|   |   |   |-- endpoints/      # ai.py, auth.py, recommendations.py, sessions.py
+|   |   |   `-- routes.py
+|   |   |-- core/               # config + security
+|   |   |-- crud/
+|   |   |-- db/                 # postgres + mongodb connectors
+|   |   |-- models/
+|   |   |-- schemas/
+|   |   `-- services/           # ocr/transcription/ollama/embedding/faiss/ingestion
+|   |-- data/                   # index artifacts
+|   |-- init_db.py
+|   |-- main.py
+|   `-- requirements.txt
+|-- frontend/
+|   |-- src/
+|   |   |-- components/
+|   |   |-- contexts/
+|   |   |-- pages/              # LandingPage, Home, Notes, Scanner, Auth pages
+|   |   `-- services/
+|   |-- index.html
+|   `-- package.json
+|-- package.json
+`-- README.md
+```
 
 ## Getting started
 
@@ -103,10 +123,14 @@ From the repo root:
 
 ```powershell
 cd backend
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
+python -m venv venv
+.\venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
+
+FAISS note for Windows:
+- `requirements.txt` intentionally skips `faiss-cpu` on Windows.
+- Install with Conda if needed: `conda install -c conda-forge faiss-cpu`
 
 Create/edit `backend/.env` (this repo’s `.gitignore` excludes it). Minimum required keys:
 
@@ -135,8 +159,7 @@ FRONTEND_ORIGIN=http://localhost:5173
 # Google OAuth
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
-# Redirect is used by the backend and defaults to:
-# http://localhost:8000/api/v1/auth/google/callback
+GOOGLE_REDIRECT_URI=http://localhost:8000/api/v1/auth/google/callback
 
 # Optional (resource ingestion)
 YOUTUBE_API_KEY=
@@ -176,11 +199,16 @@ All endpoints are under `/api/v1`.
 - **Auth** (`/auth`)
   - `POST /auth/register`
   - `POST /auth/login`
+  - `POST /auth/token`
   - `POST /auth/refresh`
   - `GET /auth/me`
   - `GET /auth/google/url`
   - `GET /auth/google/callback`
+  - `GET /auth/stats`
 - **AI** (`/ai`)
+  - `POST /ai/generate`
+  - `POST /ai/chat`
+  - `POST /ai/process`
   - `POST /ai/process-lecture`
   - `POST /ai/summarize`
   - `POST /ai/explain-doubt`
@@ -192,7 +220,11 @@ All endpoints are under `/api/v1`.
   - `POST /ai/upload-file` (multipart)
   - `POST /ai/ocr-analyze-image` (multipart)
   - `POST /ai/analyze-with-context` (multipart)
+  - `POST /ai/generate-draft-notes`
+  - `POST /ai/save-edited-notes` (multipart form)
   - `POST /ai/expand-micronote`
+  - `GET /ai/draft-notes`
+  - `GET /ai/micronotes`
 - **Sessions** (`/sessions`)
   - `POST /sessions/`
   - `GET /sessions/`
