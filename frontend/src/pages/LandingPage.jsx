@@ -112,7 +112,7 @@ function HandwritingAnimation() {
       return { phase: "hold", charCount: line.text.length, writeProgress: 1 };
     }
 
-    return { phase: "done", charCount: 0, writeProgress: 1 };
+    return { phase: "done", charCount: line.text.length, writeProgress: 1 };
   };
 
   const lineStates = measuredLines.map((line) => ({
@@ -126,6 +126,7 @@ function HandwritingAnimation() {
   let penY = measuredLines[0].y;
   let penOpacity = 0;
   let penRotate = 18;
+  let textOpacity = 1;
 
   if (activeWritingIndex >= 0) {
     const active = lineStates[activeWritingIndex];
@@ -134,7 +135,7 @@ function HandwritingAnimation() {
     penOpacity = 1;
     penRotate = 16 - Math.sin(active.writeProgress * Math.PI * 8) * 3;
   } else {
-    const previousIndex = lineStates.findLastIndex((state) => state.phase === "hold");
+    const previousIndex = lineStates.findLastIndex((state) => state.phase === "hold" || state.phase === "done");
 
     if (previousIndex >= 0) {
       const currentLine = measuredLines[previousIndex];
@@ -156,6 +157,7 @@ function HandwritingAnimation() {
         penX = currentLine.startX + currentLine.track + (measuredLines[0].startX - (currentLine.startX + currentLine.track)) * progress;
         penY = currentLine.y + (measuredLines[0].y - currentLine.y) * progress - lift;
         penOpacity = 0.45 * (1 - progress);
+        textOpacity = 1 - Math.pow(progress, 1.5); // Add a small easing curve to keep it legible slightly longer before fading off
         penRotate = 24 - progress * 6;
       }
     }
@@ -172,20 +174,19 @@ function HandwritingAnimation() {
           <p
             key={state.line.text}
             className="absolute left-7 whitespace-nowrap text-[1.05rem] font-medium tracking-[0.01em] text-cyan-100/90 [font-family:'Segoe_Script','Bradley_Hand','Comic_Sans_MS',cursive]"
-            style={{ top: `${state.line.y}px` }}
+            style={{ top: `${state.line.y}px`, opacity: textOpacity }}
           >
             {state.line.text.slice(0, state.charCount)}
           </p>
         ))}
 
         <div
-          className="absolute z-10"
+          className="absolute z-10 top-0 left-0"
           style={{
-            left: `${penX}px`,
-            top: `${penY - 15}px`,
             opacity: penOpacity,
-            transform: `rotate(${penRotate}deg)`,
-            transition: "transform 70ms linear, left 70ms linear, top 70ms linear, opacity 120ms ease",
+            transform: `translate3d(${penX}px, ${penY - 15}px, 0) rotate(${penRotate}deg)`,
+            transition: "opacity 120ms ease",
+            willChange: "transform, opacity",
           }}
         >
           <motion.div
