@@ -162,7 +162,29 @@ Respond in JSON format:
             summary = (parsed.get("summary") or "").strip()
             kp = parsed.get("key_points")
             if isinstance(kp, list):
-                key_points = [str(x).strip() for x in kp if str(x).strip()]
+                for x in kp:
+                    if isinstance(x, dict):
+                        # Extract text if AI hallucinates dictionary structure
+                        text_val = ""
+                        if "description" in x and "explanation" in x:
+                            text_val = f"{x['description']} - {x['explanation']}"
+                        elif "description" in x:
+                            text_val = str(x['description'])
+                        elif "point" in x:
+                            text_val = str(x['point'])
+                        elif "title" in x and "content" in x:
+                            text_val = f"{x['title']}: {x['content']}"
+                        elif "text" in x:
+                            text_val = str(x['text'])
+                        else:
+                            # fallback: use the first string value from the dict
+                            vals = [str(v) for v in x.values() if isinstance(v, str)]
+                            text_val = " - ".join(vals) if vals else str(x)
+                        
+                        if text_val.strip():
+                            key_points.append(text_val.strip())
+                    elif str(x).strip():
+                        key_points.append(str(x).strip())
 
         if not summary:
             summary, key_points = self._simple_fallback_summary(original_text)
