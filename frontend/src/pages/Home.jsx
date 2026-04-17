@@ -557,7 +557,7 @@ export default function Home() {
             <DialogDescription>Context-aware explanation generated from your selected text.</DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="max-h-[65vh] space-y-4 overflow-y-auto pr-2 custom-scrollbar">
             <blockquote className="rounded-xl border-l-4 border-cyan-400 bg-muted/60 p-3 text-sm italic text-muted-foreground">
               {selectedText}
             </blockquote>
